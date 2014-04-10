@@ -1,0 +1,150 @@
+#!/usr/bin/env python
+
+import os, sys
+import urllib2, requests
+from lxml import objectify
+from urlparse import urlparse, urlunparse
+from tempfile import mkstemp
+
+url = 'http://downloads.bbc.co.uk/podcasts/radio4/moreorless/rss.xml'
+url = 'file:///hxxxxxxxxxxxxxxxxxxxxxxxxxxxxrepodcast/test/rss.xml'
+url = 'file:///home/blott/local/project/repodcast/test/rss.xml'
+directory = '/home/blott/tmp/repodcast/repodcast'
+catchup = True
+catchup = False
+
+def fetch_url(url):
+   try:
+      print "fetch:", url
+      return urllib2.urlopen(url).read()
+   except:
+      raise Exception("failed to download: " + url)
+
+def parse(text,url):
+   return objectify.fromstring(text)
+   try:
+      return objectify(text)
+   except:
+      raise Exception("failed to parse rss: " + url)
+
+def fetch_feed(url):
+   text = fetch_url(url)
+   return parse(text,url)
+
+def chdir(directory):
+   try:
+      os.makedirs(directory)
+   except OSError as error: 
+      if error.errno == os.errno.EEXIST and os.path.isdir(directory):
+         pass
+      else:
+         raise Exception("failed to create directory: " + directory)
+   try:
+      os.chdir(directory)
+   except:
+      raise Exception("failed to change directory: " + directory)
+
+def touch(fname, times=None):
+   print "touch:", fname
+   with file(fname, 'a'):
+      os.utime(fname, times)
+
+def catchup_file(fname):
+   return "." + fname + ".catchup"
+
+def done_file(fname):
+   return "." + fname + ".done"
+
+def download_file(fname):
+   return fname + ".repodcast_download"
+
+def http_download(url,fname):
+   tmp = None
+   try:
+      print "download:", url
+      req = requests.get(url)
+      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.tmp")
+      for data in req.iter_content(chunk_size=4096): 
+         if data:
+            os.write(fd,data)
+      os.close(fd)
+      os.rename(tmp,fname)
+      print "download:", "done"
+      return True
+   except:
+      if tmp and os.path.exists(tmp):
+         os.unlink(tmp)
+      sys.stderr.write("failed to download: " + url + "\n")
+      return False
+
+def handle_enclosue(enclosure):
+   attributes = enclosure.attrib
+   if not "url" in attributes:
+      # Error?
+      return 1
+   #
+   url = attributes["url"]
+   url = urlparse(url)
+   fname = os.path.basename(url.path)
+   #
+   try:
+      #
+      if os.path.exists(catchup_file(fname)):
+         # print "caught up:", fname
+         return 0
+      if os.path.exists(done_file(fname)):
+         # print "already done:", fname
+         return 0
+      #
+      if os.path.exists(download_file(fname)):
+         # print "already downloaded:", fname
+         return 0
+      #
+      if os.path.exists(fname):
+         # print "already exists:", fname
+         return 0
+      #
+      if catchup:
+         touch(catchup_file(fname))
+         return 0
+      #
+      # OK.  Download the file.
+      if http_download(urlunparse(url),download_file(fname)):
+         touch(done_file(fname))
+         return 0
+      else:
+         return 1
+   except:
+      sys.stderr.write("failed to download: " + url + "\n")
+      return 1
+
+def download_feed(directory,url):
+   errors = 0
+   try:
+      pid = os.fork()
+      if pid != 0:
+         pid, status = os.waitpid(pid, 0)
+         return 0 if status == 0 else 1
+      #
+      chdir(directory)
+      feed = fetch_feed(url)
+      for enclosure in feed.findall('/rss/channel/item/enclosure'):
+         errors += handle_enclosue(enclosure)
+      if 0 < errors:
+         sys.stderr.write("enclosure errors: " + str(errors) + " in " + directory + "\n")
+         sys.exit(1)
+      #
+   except Exception as error:
+      sys.stderr.write("error: " + str(error) + "\n")
+      sys.exit(1)
+   #
+   sys.exit(0)
+
+if __name__ == "__main__":
+   errors = 0
+   errors += download_feed(directory,url)
+   #
+   if 0 < errors:
+      sys.stderr.write("feed errors: " + str(errors) + "\n")
+   sys.exit(0 if errors == 0 else 1)
+

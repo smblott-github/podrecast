@@ -1,30 +1,36 @@
 #!/usr/bin/env python
 
+# In Debian, the module "requests" is available in "python-requests".
+#
+
 import os, sys
-import urllib2, requests
+from requests import get
 from lxml import objectify
 from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
 
-url = 'http://downloads.bbc.co.uk/podcasts/radio4/moreorless/rss.xml'
 url = 'file:///hxxxxxxxxxxxxxxxxxxxxxxxxxxxxrepodcast/test/rss.xml'
 url = 'file:///home/blott/local/project/repodcast/test/rss.xml'
+url = 'http://downloads.bbc.co.uk/podcasts/radio4/moreorless/rss.xml'
 directory = '/home/blott/tmp/repodcast/repodcast'
 catchup = True
 catchup = False
 
 def fetch_url(url):
    try:
-      print "fetch:", url
-      return urllib2.urlopen(url).read()
+      print "get:", url
+      response = get(url)
+      if response.status_code != 200:
+         raise Exception()
+      return response.content
    except:
       raise Exception("failed to download: " + url)
 
 def parse(text,url):
-   return objectify.fromstring(text)
    try:
-      return objectify(text)
-   except:
+      return objectify.fromstring(text)
+   except Exception as error:
+      sys.stderr.write("error: " + str(error) + "\n")
       raise Exception("failed to parse rss: " + url)
 
 def fetch_feed(url):
@@ -62,7 +68,7 @@ def http_download(url,fname):
    tmp = None
    try:
       print "download:", url
-      req = requests.get(url)
+      req = get(url)
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.tmp")
       for data in req.iter_content(chunk_size=4096): 
          if data:

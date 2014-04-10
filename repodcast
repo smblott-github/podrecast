@@ -30,7 +30,7 @@ def parse(text,url):
    try:
       return objectify.fromstring(text)
    except Exception as error:
-      sys.stderr.write("error: " + str(error) + "\n")
+      sys.stderr.write("parse error: " + str(error) + "\n")
       raise Exception("failed to parse rss: " + url)
 
 def fetch_feed(url):
@@ -75,7 +75,7 @@ def http_download(url,fname):
             os.write(fd,data)
       os.close(fd)
       os.rename(tmp,fname)
-      print "download:", "done"
+      print "done:", fname
       return True
    except:
       if tmp and os.path.exists(tmp):
@@ -86,11 +86,10 @@ def http_download(url,fname):
 def handle_enclosue(enclosure):
    attributes = enclosure.attrib
    if not "url" in attributes:
-      # Error?
+      sys.stderr.write("enclosure without url!\n")
       return 1
    #
-   url = attributes["url"]
-   url = urlparse(url)
+   url = urlparse(attributes["url"])
    fname = os.path.basename(url.path)
    #
    try:
@@ -138,6 +137,7 @@ def download_feed(directory,url):
          errors += handle_enclosue(enclosure)
       if 0 < errors:
          sys.stderr.write("enclosure errors: " + str(errors) + " in " + directory + "\n")
+         sys.stderr.write("enclosure errors: " + url + "\n")
          sys.exit(1)
       #
    except Exception as error:

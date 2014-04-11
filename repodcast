@@ -175,7 +175,7 @@ def handle_enclosure(catchup,enclosure):
    http_download(urlunparse(url),download_file(fname))
    touch(done_file(fname))
 
-def download_feed(catchup,directory,url,username=None,password=None):
+def download_feed(catchup,directory,url):
    cwd = os.getcwd()
    errors = 0
    enclosures = None
@@ -222,26 +222,18 @@ def handle_config(config):
    #
    try:
       for line in lines:
+         if len(line) != 2:
+            raise Exception("config: invalid feed line: " + str(line))
+         #
          if line[0] == "root":
-            if len(line) == 2:
-               root = line[1]
-               if not os.path.isabs(root):
-                  raise Exception("config: root must be absolute path: " + str(line))
-               chdir(root)
-            else:
-               raise Exception("config: invalid root: " + str(line))
+            root = line[1]
+            if not os.path.isabs(root):
+               raise Exception("config: root must be an absolute path: " + str(line))
+            chdir(root)
          else:
-            if 4 < len(line):
-               raise Exception("config: invalid feed (too many tokens): " + str(line))
-            #
-            line.extend([None,None,None])
-            line = line[:4]
-            url, directory, username, password = line
-            if not directory:
-               raise Exception("config: invalid feed (no directory): " + str(line))
-            #
-            errors += download_feed(catchup,directory,url,username,password)
-            #
+            directory, url = line
+            errors += download_feed(catchup,directory,url)
+   #
    except Exception as error:
       elog("error:", str(error))
       sys.exit(1)

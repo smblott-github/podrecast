@@ -296,10 +296,10 @@ def handle_cgi_directory(path):
       else:
          # Content is available...
          #
-         host = os.environ['HOST']
+         host = os.environ['HTTP_HOST']
          scriptname = os.environ['SCRIPT_NAME']
-         pathname = os.environ['PATH_NAME']
-         # print "http://
+         pathinfo = os.environ['PATH_INFO']
+         attributes["url"] = "http://" + host + scriptname + pathinfo + "/" + fname
    #
    print "Content-Type: text/xml"
    print
@@ -316,10 +316,13 @@ def fd_copy(src,dst):
 def handle_cgi_file(path):
    print "Content-Type: audio/mpeg"
    print
+   # Flush standard output.  We are about to start using its file
+   # descriptor directly.
+   #
+   sys.stdout.flush()
    #
    fd = os.open(path, os.O_RDONLY)
    fd_copy(fd,sys.stdout.fileno())
-   os.fsync(sys.stdout.fileno())
    sys.exit(0)
 
 if __name__ == "__main__":

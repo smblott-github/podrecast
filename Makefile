@@ -11,7 +11,8 @@ mp3:
 	PATH_INFO=/Cycling/Velo-Cast/140225-01-Velocast_Productions.mp3 python ./repodcast
 
 install:
-	sudo install -vm 0555 ./repodcast /ust/local/bin
+	sudo install -vm 0555 ./repodcast /usr/local/bin
+	sudo install -vm 0555 ./repodcast /usr/lib/cgi-bin
 
 install-test-repodcast.conf:
 	sudo install -vm 0444 ./sample/repodcast.conf /etc

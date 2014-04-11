@@ -45,13 +45,13 @@ def feed_file():
 
 def log(*args):
    if cgi:
-      print "X-REPODGET-LOG:", " ".join(args)
+      print "X-PODRECAST-LOG:", " ".join(args)
    else:
       print " ".join(args)
 
 def elog(*args):
    if cgi:
-      print "X-REPODGET-ERROR:", " ".join(args)
+      print "X-PODRECAST-ERROR:", " ".join(args)
    else:
       sys.stderr.write(" ".join(args) + "\n")
 
@@ -165,7 +165,7 @@ def http_download(url,fname):
    log("download:", url)
    tmp = None
    try:
-      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.download.tmp")
+      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
       request = urllib2.urlopen(url)
       while True:
          chunk = request.read(4096)
@@ -232,7 +232,7 @@ def download_feed(catchup,directory,url):
    #
    tmp = None
    try:
-      fd, tmp = mkstemp(dir=".", prefix=feed_file(), suffix=".repodget.feed.tmp")
+      fd, tmp = mkstemp(dir=".", prefix=feed_file(), suffix=".podrecast.feed.tmp")
       os.write(fd,etree.tostring(feed))
       os.close(fd)
       # TODO:

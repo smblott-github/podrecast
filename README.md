@@ -47,6 +47,7 @@ better instructions in due course.
 If you're brave enough to figure it out and have a go, then please
 do let me know how you get on -- post an issue.
 
+- Install `podrecast` in some suitable location, possibly `/usr/local/bin`.
 - There's a sample configuration file [here](https://github.com/smblott-github/podrecast/blob/master/sample/repodcast.conf).  This should go, most likely, in `/etc/podrecast.conf`.
 - There's a sample post-processing script [here](https://github.com/smblott-github/podrecast/blob/master/script/podrecast_mp3gain); zsh required.
 

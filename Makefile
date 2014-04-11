@@ -7,6 +7,9 @@ test:
 cgi:
 	PATH_INFO=/Cycling/Velo-Cast python ./repodcast
 
+mp3:
+	PATH_INFO=/Cycling/Velo-Cast/140225-01-Velocast_Productions.mp3 python ./repodcast
+
 install:
 	sudo install -vm 0555 ./repodcast /ust/local/bin
 

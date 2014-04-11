@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-# In Debian, the module "requests" is available in "python-requests".
-#
-
 import os, sys
 from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
@@ -19,8 +16,6 @@ except:
    sys.stderr.write("import error: python-lxml not found\n")
    sys.exit(1)
 
-url = 'http://192.168.3.3/cgi-bin/podcast/Podcasts/Cycling/Velo-Cast'
-directory = '/home/blott/tmp/repodcast/repodcast'
 catchup = True
 catchup = False
 
@@ -52,7 +47,9 @@ def chdir(directory):
    try:
       exists = os.path.isdir(directory)
       if not exists:
+         print "creating:", directory
          os.makedirs(directory)
+      print "chdir:", directory
       os.chdir(directory)
       return not exists
    except (KeyboardInterrupt, SystemExit):
@@ -136,7 +133,7 @@ def handle_enclosue(catchup,enclosure):
    except:
       raise Exception("failed to download: " + url)
 
-def download_feed(catchup,directory,url):
+def download_feed(catchup,directory,url,username=None,password=None):
    cwd = os.getcwd()
    errors = 0
    enclosures = None
@@ -163,7 +160,47 @@ def download_feed(catchup,directory,url):
    chdir(cwd)
    return errors
 
+def handle_config(conf):
+   lines = None
+   errors = 0
+   #
+   try:
+      with open(conf) as fd:
+         lines = fd.readlines()
+   except:
+      sys.stderr.write("error: failed to read " + conf + "\n")
+      sys.exit(1)
+   #
+   lines = [ line.strip() for line in lines ]
+   lines = [ line for line in lines if len(line) ]
+   lines = [ line for line in lines if not line.startswith("#") ]
+   lines = [ line.split() for line in lines ]
+   #
+   try:
+      for line in lines:
+         if line[0] == "root":
+            if len(line) == 2:
+               root = line[1]
+               chdir(root)
+            else:
+               raise Exception("invalid root: " + str(line))
+         else:
+            if 4 < len(line):
+               raise Exception("invalid feed: " + str(line))
+            #
+            line.extend([None,None,None])
+            line = line[:4]
+            url, directory, username, password = line
+            directory = directory if directory else "."
+            errors += download_feed(catchup,directory,url,username,password)
+   except Exception as error:
+      sys.stderr.write("error: " + str(error) + "\n")
+      sys.exit(1)
+
 if __name__ == "__main__":
+   handle_config("./repodcast.conf")
+   sys.exit(0)
+   #
    errors = 0
    errors += download_feed(catchup,directory,url)
    #

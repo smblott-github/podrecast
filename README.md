@@ -35,7 +35,7 @@ The functionality is as follows:
   republished (they are given a distinctive suffix).
 - Some local post-processing happens (typically, a cron job), and podcast files
   are renamed such that they may now be republished.  This is your responsibility.
-- PodRecast, serving as a CGI script, publishes *exactly* the original feed's
+- PodRecast, serving now as a CGI script, then publishes *exactly* the original feed's
   rss/XML, but with each enclosure's URL replaced with a local URL.
 
 ## How?
@@ -58,15 +58,14 @@ My own `crontab` reads like:
 (`chronic` is part of the [more utils](https://joeyh.name/code/moreutils/)
 package.  It simplifies crontabs and is well worth a look.)
 
-`podrecast` is also a CGI script. Install it (also) in suitable location
+`podrecast` is also a CGI script. Install it (also) in some suitable location
 (such as `/usr/lib/cgi-bin`). Then:
 
 - URLs such as `http://SERVER/cgi-bin/podrecast/Cycling/Velo-Cast` deliver the
   associated rss/xml feed, and
 - URLs such as `http://SERVER/cgi-bin/podrecast/Cycling/Velo-Cast/SOME_FILE.mp3`
-  deliver the associated MP3 content.
+  deliver the associated podcast content.
 
 #### Warning
 
-Do not install `podrecast` as a CGI script which is accessible on the public
-internet. It is *not* secure.
+Do not install `podrecast` as a CGI script on the public internet. It is *not* secure.

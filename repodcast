@@ -137,6 +137,7 @@ def handle_enclosue(catchup,enclosure):
       raise Exception("failed to download: " + url)
 
 def download_feed(catchup,directory,url):
+   cwd = os.getcwd()
    errors = 0
    enclosures = None
    try:
@@ -147,6 +148,7 @@ def download_feed(catchup,directory,url):
       raise
    except Exception as error:
       sys.stderr.write("error: " + str(error) + "\n")
+      chdir(cwd)
       return 1
    #
    for enclosure in feed.findall('.//enclosure'):
@@ -158,6 +160,7 @@ def download_feed(catchup,directory,url):
          sys.stderr.write("error: " + str(error) + "\n")
          errors += 1
    #
+   chdir(cwd)
    return errors
 
 if __name__ == "__main__":

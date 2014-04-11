@@ -164,7 +164,7 @@ def handle_enclosure(catchup,enclosure):
       return
    #
    if os.path.exists(done_file(fname)):
-      log("done:", fname)
+      # log("done:", fname)
       return
    #
    if catchup:

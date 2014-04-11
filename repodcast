@@ -164,6 +164,7 @@ def handle_config(conf):
    lines = None
    errors = 0
    #
+   print "config:", conf
    try:
       with open(conf) as fd:
          lines = fd.readlines()
@@ -183,16 +184,19 @@ def handle_config(conf):
                root = line[1]
                chdir(root)
             else:
-               raise Exception("invalid root: " + str(line))
+               raise Exception("config: invalid root: " + str(line))
          else:
             if 4 < len(line):
-               raise Exception("invalid feed: " + str(line))
+               raise Exception("config: invalid feed (too many tokens): " + str(line))
             #
             line.extend([None,None,None])
             line = line[:4]
             url, directory, username, password = line
-            directory = directory if directory else "."
+            if not directory:
+               raise Exception("config: invalid feed (no directory): " + str(line))
+            #
             errors += download_feed(catchup,directory,url,username,password)
+            #
    except Exception as error:
       sys.stderr.write("error: " + str(error) + "\n")
       sys.exit(1)

@@ -11,6 +11,7 @@ from fcntl    import flock, LOCK_EX, LOCK_NB
 # ###########################################################################
 # Globals and "constants", ...
 
+configs = [ "./repodcast.conf", "~/.repodcast.conf", "/etc/repodcast.conf" ]
 catchup = False
 errors = 0
 lock = None
@@ -82,30 +83,28 @@ def chdir(directory):
 try:
    from requests import get
 except:
-   elog("import error: python-requests not found")
+   elog("import error: package/module python-requests not found")
    sys.exit(1)
 
 try:
    from lxml import objectify, etree
 except:
-   elog("import error: python-lxml not found")
+   elog("import error: package/module python-lxml not found")
    sys.exit(1)
 
 # ###########################################################################
 # Configuration...
 
 def choose_config():
-   configs = [ "./repodcast.conf", "~/.repodcast.conf", "/etc/repodcast.conf" ]
    for config in configs:
       config = os.path.expanduser(config)
       if os.path.isfile(config) and os.access(config, os.R_OK):
+         log("config:", config)
          return config
-   raise Exception("could not find config file: " + str(configs))
+   raise Exception("could failed to find config file: " + str(configs))
 
 def read_config(config,locking=False):
    global lock
-   #
-   log("config:", config)
    try:
       lock = fd = open(config)
       lines = fd.readlines()
@@ -113,14 +112,12 @@ def read_config(config,locking=False):
          try:
             flock(lock.fileno(), LOCK_EX | LOCK_NB)
          except:
-            elog("error: would block")
-            sys.exit(1)
+            raise Exception("locking, would block")
       else:
          lock = None
          fd.close()
-   except:
-      elog("error: failed to read", config)
-      sys.exit(1)
+   except Exception as error:
+      raise Exception("config: failed to read: " + config + "; " + str(error))
    #
    lines = [ line.strip() for line in lines ]
    lines = [ line for line in lines if len(line) ]
@@ -142,6 +139,14 @@ def fetch_url(url):
 
 # Download a URL, save in file...
 #
+# This uses urllib2, instead of python-requests.  It would be nice to
+# use the latter.  However, the "stream=True"-option support across systems
+# seems to be unreliable.
+#
+# FIXME:
+#   Unlike python-requests (which is used for feeds), this does not use
+#   "~/.netrc" for authentication.
+#
 def http_download(url,fname):
    log("download:", url)
    tmp = None
@@ -155,6 +160,9 @@ def http_download(url,fname):
          os.write(fd,chunk)
       #
       os.close(fd)
+      request.close()
+      # TODO:
+      # Respect umask.
       os.chmod(tmp,0644)
       os.rename(tmp,fname)
       log("done:", fname)
@@ -213,6 +221,8 @@ def download_feed(catchup,directory,url):
       fd, tmp = mkstemp(dir=".", prefix=feed_file(), suffix=".repodget.feed.tmp")
       os.write(fd,etree.tostring(feed))
       os.close(fd)
+      # TODO:
+      # Respect umask.
       os.chmod(tmp,0644)
       os.rename(tmp,feed_file())
    except:

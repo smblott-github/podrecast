@@ -4,16 +4,32 @@ import os, sys
 from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
 
+cgi = "PATH_INFO" in os.environ
+quiet = cgi
+
+def log(*args):
+   if not quiet:
+      if cgi:
+         print "X-REPODGET-LOG:", " ".join(args)
+      else:
+         print " ".join(args)
+
+def elog(*args):
+   if cgi:
+      print "X-REPODGET-ERROR:", " ".join(args)
+   else:
+      sys.stderr.write(" ".join(args) + "\n")
+
 try:
    from requests import get
 except:
-   sys.stderr.write("import error: python-requests not found\n")
+   elog("import error: python-requests not found")
    sys.exit(1)
 
 try:
    from lxml import objectify, etree
 except:
-   sys.stderr.write("import error: python-lxml not found\n")
+   elog("import error: python-lxml not found")
    sys.exit(1)
 
 catchup = True
@@ -21,7 +37,7 @@ catchup = False
 
 def fetch_url(url):
    try:
-      print "get:", url
+      log("get:", url)
       response = get(url)
       if response.status_code != 200:
          raise Exception()
@@ -47,9 +63,9 @@ def chdir(directory):
    try:
       exists = os.path.isdir(directory)
       if not exists:
-         print "creating:", directory
+         log("creating:", directory)
          os.makedirs(directory)
-      print "chdir:", directory
+      log("chdir:", directory)
       os.chdir(directory)
       return not exists
    except (KeyboardInterrupt, SystemExit):
@@ -63,7 +79,7 @@ def chdir(directory):
       raise Exception("failed to create/change directory: " + directory)
 
 def touch(fname, times=None):
-   print "touch:", fname
+   log("touch:", fname)
    with file(fname, 'a'):
       os.utime(fname, times)
 
@@ -82,7 +98,7 @@ def feed_file():
 def http_download(url,fname):
    tmp = None
    try:
-      print "download:", url
+      log("download:", url)
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.tmp")
       request = get(url, stream=True)
       for data in request.iter_content(chunk_size=4096): 
@@ -93,7 +109,7 @@ def http_download(url,fname):
       # Would be better to respect umask, here...
       os.chmod(tmp,0644)
       os.rename(tmp,fname)
-      print "done:", fname
+      log("done:", fname)
    except:
       if tmp and os.path.exists(tmp):
          os.unlink(tmp)
@@ -102,7 +118,7 @@ def http_download(url,fname):
 def handle_enclosue(catchup,enclosure):
    attributes = enclosure.attrib
    if not "url" in attributes:
-      sys.stderr.write("enclosure without url!\n")
+      elog("enclosure without url!")
       return
    #
    url = urlparse(attributes["url"])
@@ -150,7 +166,7 @@ def download_feed(catchup,directory,url,username=None,password=None):
    except (KeyboardInterrupt, SystemExit):
       raise
    except Exception as error:
-      sys.stderr.write("error: " + str(error) + "\n")
+      elog("error:", str(error))
       chdir(cwd)
       return 1
    #
@@ -160,7 +176,7 @@ def download_feed(catchup,directory,url,username=None,password=None):
       except (KeyboardInterrupt, SystemExit):
          raise
       except:
-         sys.stderr.write("error: " + str(error) + "\n")
+         elog("error:", str(error))
          errors += 1
    #
    try:
@@ -174,22 +190,26 @@ def download_feed(catchup,directory,url,username=None,password=None):
    chdir(cwd)
    return errors
 
-def handle_config(conf):
+def read_config(config):
    lines = None
-   errors = 0
    #
-   print "config:", conf
+   log("config:", config)
    try:
-      with open(conf) as fd:
+      with open(config) as fd:
          lines = fd.readlines()
    except:
-      sys.stderr.write("error: failed to read " + conf + "\n")
+      elog("error: failed to read", config)
       sys.exit(1)
    #
    lines = [ line.strip() for line in lines ]
    lines = [ line for line in lines if len(line) ]
    lines = [ line for line in lines if not line.startswith("#") ]
    lines = [ line.split() for line in lines ]
+   return lines
+
+def handle_config(config):
+   errors = 0
+   lines = read_config(config)
    #
    try:
       for line in lines:
@@ -214,7 +234,7 @@ def handle_config(conf):
             errors += download_feed(catchup,directory,url,username,password)
             #
    except Exception as error:
-      sys.stderr.write("error: " + str(error) + "\n")
+      elog("error:", str(error))
       sys.exit(1)
    #
    return errors
@@ -227,12 +247,24 @@ def choose_config():
          return config
    raise Exception("could not find config file: " + str(configs))
 
-if __name__ == "__main__":
+def main():
    errors = 0
    choose_config()
    errors += handle_config(choose_config())
    #
    if 0 < errors:
-      sys.stderr.write("feed errors: " + str(errors) + "\n")
+      elog("feed errors:", str(errors))
    sys.exit(0 if errors == 0 else 1)
+
+def handle_cgi():
+   lines = read_config(choose_config())
+   lines = [ line for line in lines if line[0] == "root" ]
+   print lines
+   pass
+
+if __name__ == "__main__":
+   if cgi:
+      handle_cgi()
+   else:
+      main()
 

@@ -11,7 +11,7 @@ except:
    sys.exit(1)
 
 try:
-   from lxml import objectify
+   from lxml import objectify, etree
 except:
    sys.stderr.write("import error: python-lxml not found\n")
    sys.exit(1)
@@ -67,14 +67,17 @@ def touch(fname, times=None):
    with file(fname, 'a'):
       os.utime(fname, times)
 
-def catchup_file(fname):
-   return "." + fname + ".catchup"
-
 def done_file(fname):
    return "." + fname + ".done"
 
+def catchup_file(fname):
+   return done_file(fname)
+
 def download_file(fname):
    return fname + ".repodcast_download"
+
+def feed_file():
+   return ".repodcast_feed.xml"
 
 def http_download(url,fname):
    tmp = None
@@ -86,6 +89,8 @@ def http_download(url,fname):
          if data:
             os.write(fd,data)
       os.close(fd)
+      # Would be better to respect umask, here...
+      os.chmod(tmp,0644)
       os.rename(tmp,fname)
       print "done:", fname
    except:
@@ -140,7 +145,7 @@ def download_feed(catchup,directory,url,username=None,password=None):
    try:
       catchup = chdir(directory) or catchup
       feed = fetch_feed(url)
-      enclosures = feed.findall('.//enclosure')
+      enclosures = feed.findall('.//channel/item/enclosure')
    except (KeyboardInterrupt, SystemExit):
       raise
    except Exception as error:
@@ -148,7 +153,7 @@ def download_feed(catchup,directory,url,username=None,password=None):
       chdir(cwd)
       return 1
    #
-   for enclosure in feed.findall('.//enclosure'):
+   for enclosure in enclosures:
       try:
          handle_enclosue(catchup,enclosure)
       except (KeyboardInterrupt, SystemExit):
@@ -156,6 +161,14 @@ def download_feed(catchup,directory,url,username=None,password=None):
       except:
          sys.stderr.write("error: " + str(error) + "\n")
          errors += 1
+   #
+   try:
+      with open(feed_file(), 'w') as fd:
+         fd.write(etree.tostring(feed))
+   except (KeyboardInterrupt, SystemExit):
+      raise
+   except:
+      raise Exception("failed to write feed file: " + directory)
    #
    chdir(cwd)
    return errors
@@ -182,6 +195,8 @@ def handle_config(conf):
          if line[0] == "root":
             if len(line) == 2:
                root = line[1]
+               if not os.path.isabs(root):
+                  raise Exception("config: root must be absolute path: " + str(line))
                chdir(root)
             else:
                raise Exception("config: invalid root: " + str(line))
@@ -200,13 +215,12 @@ def handle_config(conf):
    except Exception as error:
       sys.stderr.write("error: " + str(error) + "\n")
       sys.exit(1)
+   #
+   return errors
 
 if __name__ == "__main__":
-   handle_config("./repodcast.conf")
-   sys.exit(0)
-   #
    errors = 0
-   errors += download_feed(catchup,directory,url)
+   errors += handle_config("./repodcast.conf")
    #
    if 0 < errors:
       sys.stderr.write("feed errors: " + str(errors) + "\n")

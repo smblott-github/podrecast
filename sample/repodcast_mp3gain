@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 local gain=6
+local suffix='.repodcast_download'
 
 # ###########################################################################
 # Find config file...
@@ -11,7 +12,7 @@ local config
    local conf
    for conf
       [[ -z $config && -n $conf && -f $conf && -r $conf ]] && config=$conf
-} ./repodcast.conf ~/.repodcast.conf /etc/repodcast.conf
+} ./repodcast.conf ~/.repodcast.conf /usr/local/etc/repodcast.conf /etc/repodcast.conf
 
 if [[ -z $config ]]
 then
@@ -46,29 +47,31 @@ fi
 
 __do_mp3gain ()
 {
-   local file="$argv[1]"
-   local nfile="${file%.repodcast_download}"
-   print "file from:" $file
-   print "file to:" $nfile
+   local src="$argv[1]"
+   local dst="${src%$suffix}"
+
+   print "file from:" $src
+   print "file to:" $dst
    (
       if flock -x -n 9
       then
-         nice nice mp3gain -r -c -p -t -m $gain $file \
-            && [[ $file != $nfile ]]                  \
-            && mv -v $file $nfile
+         nice nice mp3gain -r -c -p -t -m $gain $src \
+            && [[ $src != $dst ]]                 \
+            && mv -v $src $dst
       else
-         print "failed to lock:" $file
+         print "failed to lock:" $src
       fi
-   ) 9< $file
+   ) 9< $src
 }
+
+# ###########################################################################
+# Apply __do_mp3gain...
 
 local root
 autoload -U zargs
 
+print "suffix:" $suffix
+
 for root in $roots
-do
-   zargs -r -L 1 -- $root/**/*.repodcast_download(N.) -- __do_mp3gain
-done
-
-
+   zargs -r -L 1 -- $root/**/*$suffix(N.) -- __do_mp3gain
 

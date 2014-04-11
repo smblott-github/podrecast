@@ -6,12 +6,26 @@
 import os, sys, urllib2
 from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
-from fcntl    import flock, LOCK_EX, LOCK_NB
+from fcntl import flock, LOCK_EX, LOCK_NB
 
 # ###########################################################################
 # Globals and "constants", ...
 
-configs = [ "./repodcast.conf", "~/.repodcast.conf", "/etc/repodcast.conf" ]
+# Configuration files.
+# The first available configuration file is chosen.
+#
+# If using the CGI functionality of repodcast, then it makes sense to use
+# "/etc/repodcast.conf" or "/usr/local/etc/repodcast.conf", because these are
+# the only two which are findable by all users, including the user account
+# under which the web server is running.
+#
+configs = [ 
+            "./repodcast.conf",
+            "~/.repodcast.conf",
+            "/usr/local/etc/repodcast.conf",
+            "/etc/repodcast.conf"
+            ]
+
 catchup = False
 errors = 0
 lock = None

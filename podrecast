@@ -190,6 +190,7 @@ def http_download(url,fname):
 # Handle feeds and enclosures...
 
 def download_feeds(config):
+   global errors
    for line in read_config(config,True):
       if line[0] == "root":
          if len(line) != 2:
@@ -211,6 +212,7 @@ def download_feeds(config):
             errors += 1
 
 def download_feed(catchup,directory,url):
+   global errors
    cwd = os.getcwd()
    try:
       catchup = chdir(directory) or catchup

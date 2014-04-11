@@ -50,8 +50,8 @@ __do_mp3gain ()
    local src="$argv[1]"
    local dst="${src%$suffix}"
 
-   print "file from:" $src
-   print "file to:" $dst
+   print "from:" $src
+   print "to:" $dst
    (
       if flock -x -n 9
       then

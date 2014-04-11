@@ -67,7 +67,7 @@ package.  It simplifies crontabs and is well worth a look.)
 - URLs such as `http://SERVER/cgi-bin/podrecast/Cycling/Velo-Cast/SOME_FILE.mp3`
   deliver the associated MP3 content.
 
-## Warning
+#### Warning
 
 Do not install the `podrecast` script as a CGI script on a public network. It
 is *not* secure.

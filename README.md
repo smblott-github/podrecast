@@ -69,5 +69,5 @@ package.  It simplifies crontabs and is well worth a look.)
 
 #### Warning
 
-Do not install `podrecast` as a CGI script on a public network. It
-is *not* secure.
+Do not install `podrecast` as a CGI script which is accessible on the public
+internet. It is *not* secure.

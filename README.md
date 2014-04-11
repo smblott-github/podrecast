@@ -1,14 +1,14 @@
 PodRecast
 =========
 
-PodRecast podcast aggregator for post-processing then re-publishing podcasts
+PodRecast -- a podcast aggregator for post-processing then re-publishing podcasts
 
 ## Why?
 
 For me, two reasons:
 
-- Podcast loudness varies substantially across feeds.  Some are can be too
-  load, some too quiet.  And probably you don't want to have to fiddle with the
+- Podcast loudness varies substantially across feeds.  Some can be too
+  load, some too quiet.  And I don't want to have to fiddle with the
   volume for each new podcast.  [MP3Gain](http://mp3gain.sourceforge.net/) can
   be used to balance the loudness of MP3 files, making all podcasts sound
   equally loud.
@@ -45,4 +45,16 @@ As of April 2014, this is a new project, with many rough edges.  I'll post
 better instructions in due course.
 
 If you're brave enough to figure it out on your own and have a go, then please
-do let me know how you get on -- post an issue.
+do let me know how you get on -- post an issue:
+
+- There's a sample configuration file [here](https://github.com/smblott-github/podrecast/blob/master/sample/repodcast.conf).
+- There's a sample post-processing scrip [here](https://github.com/smblott-github/podrecast/blob/master/script/podrecast_mp3gain).
+
+My own `crontab` reads like:
+
+    05 2,12,17,20,23 * * * chronic podrecast
+    55 2,12,17,20,23 * * * chronic podrecast_mp3gain
+
+(`chromic` is part of the [more utils](https://github.com/madx/moreutils)
+package.  It simplifies crontabs and is well worth a look.
+

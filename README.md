@@ -1,6 +1,4 @@
-repodcast
+podrecast
 =========
 
-Republish podcasts.
-
-Work in progress...
+PodRecast -- Coming soon!

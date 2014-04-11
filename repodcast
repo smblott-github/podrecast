@@ -5,14 +5,12 @@ from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
 
 cgi = "PATH_INFO" in os.environ
-quiet = cgi
 
 def log(*args):
-   if not quiet:
-      if cgi:
-         print "X-REPODGET-LOG:", " ".join(args)
-      else:
-         print " ".join(args)
+   if cgi:
+      print "X-REPODGET-LOG:", " ".join(args)
+   else:
+      print " ".join(args)
 
 def elog(*args):
    if cgi:
@@ -259,7 +257,20 @@ def main():
 def handle_cgi():
    lines = read_config(choose_config())
    lines = [ line for line in lines if line[0] == "root" ]
-   print lines
+   #
+   if len(lines) != 1 or len(lines[0]) != 2:
+      elog("error: cannot serve CGI without a single root")
+      sys.exit(1)
+   #
+   root = lines[0][1]
+   path = os.environ['PATH_INFO']
+   try:
+      # TODO:
+      # path is not secure!
+      chdir(root + path)
+   except:
+      elog("error: cannot chdir:", root)
+      sys.exit(1)
    pass
 
 if __name__ == "__main__":

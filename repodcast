@@ -118,7 +118,7 @@ def http_download_urllib(url,fname):
    log("urllib2:", url)
    tmp = None
    try:
-      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.tmp")
+      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.download.tmp")
       request = urllib2.urlopen(url)
       while True:
          chunk = request.read(4096)
@@ -193,8 +193,17 @@ def download_feed(catchup,directory,url):
    for enclosure in enclosures:
       handle_enclosure(catchup,enclosure)
    #
-   with open(feed_file(), 'w') as fd:
-      fd.write(etree.tostring(feed))
+   tmp = None
+   try:
+      fd, tmp = mkstemp(dir=".", prefix=feed_file(), suffix=".repodget.feed.tmp")
+      os.write(fd,etree.tostring(feed))
+      os.close(fd)
+      os.chmod(tmp,0644)
+      os.rename(tmp,feed_file())
+   except:
+      if tmp and os.path.exists(tmp):
+         os.unlink(tmp)
+      raise
    #
    chdir(cwd)
 

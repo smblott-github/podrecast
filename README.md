@@ -56,7 +56,7 @@ My own `crontab` reads like:
     05 2,12,17,20,23 * * * chronic podrecast
     55 2,12,17,20,23 * * * chronic podrecast_mp3gain
 
-(`chronic` is part of the [more utils](https://github.com/madx/moreutils)
+(`chronic` is part of the [more utils](https://joeyh.name/code/moreutils/)
 package.  It simplifies crontabs and is well worth a look.)
 
 `podrecast` is also a CGI script. Install it (also) in suitable location

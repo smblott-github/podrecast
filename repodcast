@@ -34,16 +34,11 @@ catchup = True
 catchup = False
 
 def fetch_url(url):
-   try:
-      log("get:", url)
-      response = get(url)
-      if response.status_code != 200:
-         raise Exception()
-      return response.content
-   except (KeyboardInterrupt, SystemExit):
-      raise
-   except:
+   log("get:", url)
+   response = get(url)
+   if response.status_code != 200:
       raise Exception("failed to download: " + url)
+   return response.content
 
 def parse(text,url):
    try:
@@ -71,10 +66,6 @@ def chdir(directory):
    except OSError as error: 
       if error.errno == os.errno.EEXIST and os.path.isdir(directory):
          pass
-      else:
-         raise Exception("failed to create/change directory: " + directory)
-   except:
-      raise Exception("failed to create/change directory: " + directory)
 
 def touch(fname, times=None):
    log("touch:", fname)
@@ -98,10 +89,16 @@ def http_download(url,fname):
    try:
       log("download:", url)
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.tmp")
-      request = get(url, stream=True)
-      for data in request.iter_content(chunk_size=4096): 
-         if data:
-            os.write(fd,data)
+      try:
+         request = get(url, stream=True)
+         for data in request.iter_content(chunk_size=4096): 
+            if data:
+               os.write(fd,data)
+         request.close()
+         os.close(fd)
+      except:
+         request = get(url)
+         os.write(fd,request.content)
       os.close(fd)
       #
       # Would be better to respect umask, here...
@@ -113,7 +110,7 @@ def http_download(url,fname):
          os.unlink(tmp)
       raise
 
-def handle_enclosue(catchup,enclosure):
+def handle_enclosure(catchup,enclosure):
    attributes = enclosure.attrib
    if not "url" in attributes:
       elog("enclosure without url!")
@@ -122,36 +119,29 @@ def handle_enclosue(catchup,enclosure):
    url = urlparse(attributes["url"])
    fname = os.path.basename(url.path)
    #
-   try:
-      #
-      if os.path.exists(catchup_file(fname)):
-         # print "caught up:", fname
-         return
-      #
-      if os.path.exists(done_file(fname)):
-         # print "already done:", fname
-         return
-      #
-      if os.path.exists(download_file(fname)):
-         # print "already downloaded:", fname
-         return
-      #
-      if os.path.exists(fname):
-         # print "already exists:", fname
-         return
-      #
-      if catchup:
-         touch(catchup_file(fname))
-         return
-      #
-      # OK.  Download the file.
-      http_download(urlunparse(url),download_file(fname))
-      touch(done_file(fname))
-      #
-   except (KeyboardInterrupt, SystemExit):
-      raise
-   except:
-      raise Exception("failed to download: " + url)
+   if os.path.exists(catchup_file(fname)):
+      # print "caught up:", fname
+      return
+   #
+   if os.path.exists(done_file(fname)):
+      # print "already done:", fname
+      return
+   #
+   if os.path.exists(download_file(fname)):
+      # print "already downloaded:", fname
+      return
+   #
+   if os.path.exists(fname):
+      # print "already exists:", fname
+      return
+   #
+   if catchup:
+      touch(catchup_file(fname))
+      return
+   #
+   # OK.  Download the file.
+   http_download(urlunparse(url),download_file(fname))
+   touch(done_file(fname))
 
 def download_feed(catchup,directory,url,username=None,password=None):
    cwd = os.getcwd()
@@ -163,27 +153,16 @@ def download_feed(catchup,directory,url,username=None,password=None):
       enclosures = feed.findall('.//channel/item/enclosure')
    except (KeyboardInterrupt, SystemExit):
       raise
-   except Exception as error:
-      elog("error:", str(error))
+   except Exception:
       chdir(cwd)
-      return 1
+      raise
    #
    for enclosure in enclosures:
-      try:
-         handle_enclosue(catchup,enclosure)
-      except (KeyboardInterrupt, SystemExit):
-         raise
-      except:
-         elog("error:", str(error))
-         errors += 1
+      handle_enclosure(catchup,enclosure)
+      # errors += 1
    #
-   try:
-      with open(feed_file(), 'w') as fd:
-         fd.write(etree.tostring(feed))
-   except (KeyboardInterrupt, SystemExit):
-      raise
-   except:
-      raise Exception("failed to write feed file: " + directory)
+   with open(feed_file(), 'w') as fd:
+      fd.write(etree.tostring(feed))
    #
    chdir(cwd)
    return errors
@@ -262,16 +241,46 @@ def handle_cgi():
       elog("error: cannot serve CGI without a single root")
       sys.exit(1)
    #
+   # TODO:
+   # path is not secure!
    root = lines[0][1]
-   path = os.environ['PATH_INFO']
-   try:
-      # TODO:
-      # path is not secure!
-      chdir(root + path)
-   except:
-      elog("error: cannot chdir:", root)
+   path = root + os.environ['PATH_INFO']
+   if os.path.isdir(path):
+      return handle_cgi_directory(path)
+   if os.path.isfile(path):
+      return handle_cgi_file(path)
+   #
+   elog("error: does not exist:", path)
+   sys.exit(1)
+   #
+
+def handle_cgi_directory(path):
+   chdir(path)
+   #
+   if not os.path.isfile(feed_file()):
+      elog("error: feed file does not exist:", path + "/" + feed_file())
       sys.exit(1)
-   pass
+   #
+   if not os.path.isfile(feed_file()) or not os.access(feed_file(), os.R_OK):
+      elog("error: cannot read feed file:", path + "/" + feed_file())
+      sys.exit(1)
+   #
+   text = None
+   with open(feed_file()) as fd:
+      text = fd.read()
+   feed = parse(text,"file://" + path + "/" + feed_file())
+   #
+   enclosures = feed.findall('.//channel/item/enclosure')
+   for enclosure in enclosures:
+      attributes = enclosure.attrib
+      url = urlparse(attributes["url"])
+      fname = os.path.basename(url.path)
+      if not os.path.isfile(fname) or not os.access(fname, os.R_OK):
+         item = enclosure.getparent()
+         channel = item.getparent()
+         channel.remove(item)
+   #
+   print etree.tostring(feed)
 
 if __name__ == "__main__":
    if cgi:

@@ -44,16 +44,12 @@ def feed_file():
 # Utilities...
 
 def log(*args):
-   if cgi:
-      print "X-PODRECAST-LOG:", " ".join(args)
-   else:
-      print " ".join(args)
+   if cgi: print "X-PODRECAST-LOG:", " ".join(args)
+   else:   print " ".join(args)
 
 def elog(*args):
-   if cgi:
-      print "X-PODRECAST-ERROR:", " ".join(args)
-   else:
-      sys.stderr.write(" ".join(args) + "\n")
+   if cgi: print "X-PODRECAST-ERROR:", " ".join(args)
+   else:   sys.stderr.write(" ".join(args) + "\n")
 
 def touch(fname):
    log("touch:", fname)
@@ -63,8 +59,7 @@ def touch(fname):
 def fd_copy(src,dst):
    while True:
       chunk = os.read(src,4096)
-      if not chunk:
-         return
+      if not chunk: return
       os.write(dst,chunk)
 
 # Create (if necessary) and chdir to directory.
@@ -86,8 +81,7 @@ def chdir(directory):
    except OSError as error: 
       if error.errno == os.errno.EEXIST and os.path.isdir(directory):
          pass
-      else:
-         raise
+      else: raise
    #
    return created
 
@@ -125,8 +119,7 @@ def read_config(config,locking=False):
       if locking:
          try:
             flock(lock.fileno(), LOCK_EX | LOCK_NB)
-         except:
-            raise Exception("locking, would block")
+         except: raise Exception("locking, would block")
       else:
          lock = None
          fd.close()
@@ -169,8 +162,7 @@ def http_download(url,fname):
       request = urllib2.urlopen(url)
       while True:
          chunk = request.read(4096)
-         if not chunk:
-            break
+         if not chunk: break
          os.write(fd,chunk)
       #
       os.close(fd)

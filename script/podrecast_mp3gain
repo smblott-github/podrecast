@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 local gain=6
-local suffix='.repodcast_download'
+local suffix='.podrecast_download'
 
 # ###########################################################################
 # Do we have mp3gain...?
@@ -21,11 +21,11 @@ local config
    local conf
    for conf
       [[ -z $config && -n $conf && -f $conf && -r $conf ]] && config=$conf
-} ./repodcast.conf ~/.repodcast.conf /usr/local/etc/repodcast.conf /etc/repodcast.conf
+} ./podrecast.conf ~/.podrecast.conf /usr/local/etc/podrecast.conf /etc/podrecast.conf
 
 if [[ -z $config ]]
 then
-   print "error: could not find repodcast.conf" >&2
+   print "error: could not find podrecast.conf" >&2
    exit 1
 fi
 

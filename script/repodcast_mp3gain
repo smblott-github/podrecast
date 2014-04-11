@@ -4,6 +4,15 @@ local gain=6
 local suffix='.repodcast_download'
 
 # ###########################################################################
+# Do we have mp3gain...?
+
+if ! which mp3gain > /dev/null
+then
+   print "error: could not find mp3gain executable" >&2
+   exit 1
+fi
+
+# ###########################################################################
 # Find config file...
 
 local config

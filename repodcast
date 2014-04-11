@@ -3,8 +3,10 @@
 import os, sys, urllib2
 from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
+from fcntl import flock, LOCK_EX, LOCK_UN, LOCK_NB
 
 cgi = "PATH_INFO" in os.environ
+lock = None
 
 def log(*args):
    if cgi:
@@ -196,13 +198,23 @@ def download_feed(catchup,directory,url):
    #
    chdir(cwd)
 
-def read_config(config):
+def read_config(config,locking=False):
+   global lock
    lines = None
    #
    log("config:", config)
    try:
-      with open(config) as fd:
-         lines = fd.readlines()
+      lock = fd = open(config)
+      lines = fd.readlines()
+      if locking:
+         try:
+            flock(lock.fileno(), LOCK_EX | LOCK_NB)
+         except:
+            elog("error: would block")
+            sys.exit(1)
+      else:
+         lock = None
+         fd.close()
    except:
       elog("error: failed to read", config)
       sys.exit(1)
@@ -214,7 +226,7 @@ def read_config(config):
    return lines
 
 def handle_config(config):
-   lines = read_config(config)
+   lines = read_config(config,True)
    #
    try:
       for line in lines:

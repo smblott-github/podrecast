@@ -23,21 +23,20 @@ For me, two reasons:
 
 ## What?
 
-PodRecast is a podcast aggregator for:
+Key idea:
 
-- downloading podcasts to a local system,
-- reprocessing with tools such as MP3Gain, and
-- republishing them on a local network.
+- republish podcasts, keeping the rss/xml exactly as it was, except replacing
+  enclosure URLs with URLs referencing local, post-processed files.
 
 The functionality is as follows:
 
 - Download feeds and podcasts to local storage.
 - Podcasts, when downloaded, are initially given a name which is *not*
-  republished (because of their file name suffix).
+  republished (they are given a distinctive suffix).
 - Some local post-processing happens (typically, a cron job), and podcast files
-  are renamed such that they may now be republished.
-- PodRecast, serving as a CGI script, publishes *exactly* the original feed's rss XML, but with each
-  enclosures' URLs replaced with local URLs.
+  are renamed such that they may now be republished.  This is your responsibility.
+- PodRecast, serving as a CGI script, publishes *exactly* the original feed's
+  rss/XML, but with each enclosure's URL replaced with a local URL.
 
 ## How?
 

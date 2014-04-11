@@ -4,14 +4,22 @@
 #
 
 import os, sys
-from requests import get
-from lxml import objectify
 from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
 
-url = 'file:///hxxxxxxxxxxxxxxxxxxxxxxxxxxxxrepodcast/test/rss.xml'
-url = 'file:///home/blott/local/project/repodcast/test/rss.xml'
-url = 'http://downloads.bbc.co.uk/podcasts/radio4/moreorless/rss.xml'
+try:
+   from requests import get
+except:
+   sys.stderr.write("import error: python-requests not found\n")
+   sys.exit(1)
+
+try:
+   from lxml import objectify
+except:
+   sys.stderr.write("import error: python-lxml not found\n")
+   sys.exit(1)
+
+url = 'http://192.168.3.3/cgi-bin/podcast/Podcasts/Cycling/Velo-Cast'
 directory = '/home/blott/tmp/repodcast/repodcast'
 catchup = True
 catchup = False
@@ -23,14 +31,17 @@ def fetch_url(url):
       if response.status_code != 200:
          raise Exception()
       return response.content
+   except (KeyboardInterrupt, SystemExit):
+      raise
    except:
       raise Exception("failed to download: " + url)
 
 def parse(text,url):
    try:
       return objectify.fromstring(text)
+   except (KeyboardInterrupt, SystemExit):
+      raise
    except Exception as error:
-      sys.stderr.write("parse error: " + str(error) + "\n")
       raise Exception("failed to parse rss: " + url)
 
 def fetch_feed(url):
@@ -39,16 +50,20 @@ def fetch_feed(url):
 
 def chdir(directory):
    try:
-      os.makedirs(directory)
+      exists = os.path.isdir(directory)
+      if not exists:
+         os.makedirs(directory)
+      os.chdir(directory)
+      return not exists
+   except (KeyboardInterrupt, SystemExit):
+      raise
    except OSError as error: 
       if error.errno == os.errno.EEXIST and os.path.isdir(directory):
          pass
       else:
-         raise Exception("failed to create directory: " + directory)
-   try:
-      os.chdir(directory)
+         raise Exception("failed to create/change directory: " + directory)
    except:
-      raise Exception("failed to change directory: " + directory)
+      raise Exception("failed to create/change directory: " + directory)
 
 def touch(fname, times=None):
    print "touch:", fname
@@ -68,26 +83,24 @@ def http_download(url,fname):
    tmp = None
    try:
       print "download:", url
-      req = get(url)
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.tmp")
+      req = get(url, stream=True)
       for data in req.iter_content(chunk_size=4096): 
          if data:
             os.write(fd,data)
       os.close(fd)
       os.rename(tmp,fname)
       print "done:", fname
-      return True
    except:
       if tmp and os.path.exists(tmp):
          os.unlink(tmp)
-      sys.stderr.write("failed to download: " + url + "\n")
-      return False
+      raise
 
-def handle_enclosue(enclosure):
+def handle_enclosue(catchup,enclosure):
    attributes = enclosure.attrib
    if not "url" in attributes:
       sys.stderr.write("enclosure without url!\n")
-      return 1
+      return
    #
    url = urlparse(attributes["url"])
    fname = os.path.basename(url.path)
@@ -96,59 +109,60 @@ def handle_enclosue(enclosure):
       #
       if os.path.exists(catchup_file(fname)):
          # print "caught up:", fname
-         return 0
+         return
+      #
       if os.path.exists(done_file(fname)):
          # print "already done:", fname
-         return 0
+         return
       #
       if os.path.exists(download_file(fname)):
          # print "already downloaded:", fname
-         return 0
+         return
       #
       if os.path.exists(fname):
          # print "already exists:", fname
-         return 0
+         return
       #
       if catchup:
          touch(catchup_file(fname))
-         return 0
+         return
       #
       # OK.  Download the file.
-      if http_download(urlunparse(url),download_file(fname)):
-         touch(done_file(fname))
-         return 0
-      else:
-         return 1
+      http_download(urlunparse(url),download_file(fname))
+      touch(done_file(fname))
+      #
+   except (KeyboardInterrupt, SystemExit):
+      raise
    except:
-      sys.stderr.write("failed to download: " + url + "\n")
-      return 1
+      raise Exception("failed to download: " + url)
 
-def download_feed(directory,url):
+def download_feed(catchup,directory,url):
    errors = 0
+   enclosures = None
    try:
-      pid = os.fork()
-      if pid != 0:
-         pid, status = os.waitpid(pid, 0)
-         return 0 if status == 0 else 1
-      #
-      chdir(directory)
+      catchup = chdir(directory) or catchup
       feed = fetch_feed(url)
-      for enclosure in feed.findall('/rss/channel/item/enclosure'):
-         errors += handle_enclosue(enclosure)
-      if 0 < errors:
-         sys.stderr.write("enclosure errors: " + str(errors) + " in " + directory + "\n")
-         sys.stderr.write("enclosure errors: " + url + "\n")
-         sys.exit(1)
-      #
+      enclosures = feed.findall('.//enclosure')
+   except (KeyboardInterrupt, SystemExit):
+      raise
    except Exception as error:
       sys.stderr.write("error: " + str(error) + "\n")
-      sys.exit(1)
+      return 1
    #
-   sys.exit(0)
+   for enclosure in feed.findall('.//enclosure'):
+      try:
+         handle_enclosue(catchup,enclosure)
+      except (KeyboardInterrupt, SystemExit):
+         raise
+      except:
+         sys.stderr.write("error: " + str(error) + "\n")
+         errors += 1
+   #
+   return errors
 
 if __name__ == "__main__":
    errors = 0
-   errors += download_feed(directory,url)
+   errors += download_feed(catchup,directory,url)
    #
    if 0 < errors:
       sys.stderr.write("feed errors: " + str(errors) + "\n")

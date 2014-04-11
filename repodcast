@@ -177,7 +177,6 @@ def handle_enclosure(catchup,enclosure):
 
 def download_feed(catchup,directory,url):
    cwd = os.getcwd()
-   errors = 0
    enclosures = None
    try:
       catchup = chdir(directory) or catchup
@@ -191,13 +190,11 @@ def download_feed(catchup,directory,url):
    #
    for enclosure in enclosures:
       handle_enclosure(catchup,enclosure)
-      # errors += 1
    #
    with open(feed_file(), 'w') as fd:
       fd.write(etree.tostring(feed))
    #
    chdir(cwd)
-   return errors
 
 def read_config(config):
    lines = None
@@ -217,7 +214,6 @@ def read_config(config):
    return lines
 
 def handle_config(config):
-   errors = 0
    lines = read_config(config)
    #
    try:
@@ -232,13 +228,11 @@ def handle_config(config):
             chdir(root)
          else:
             directory, url = line
-            errors += download_feed(catchup,directory,url)
+            download_feed(catchup,directory,url)
    #
    except Exception as error:
       elog("error:", str(error))
       sys.exit(1)
-   #
-   return errors
 
 def choose_config():
    configs = [ "./repodcast.conf", "~/.repodcast.conf", "/etc/repodcast.conf" ]
@@ -249,13 +243,9 @@ def choose_config():
    raise Exception("could not find config file: " + str(configs))
 
 def main():
-   errors = 0
    choose_config()
-   errors += handle_config(choose_config())
-   #
-   if 0 < errors:
-      elog("feed errors:", str(errors))
-   sys.exit(0 if errors == 0 else 1)
+   handle_config(choose_config())
+   sys.exit(0)
 
 def handle_cgi():
    lines = read_config(choose_config())
@@ -303,6 +293,13 @@ def handle_cgi_directory(path):
          item = enclosure.getparent()
          channel = item.getparent()
          channel.remove(item)
+      else:
+         # Content is available...
+         #
+         host = os.environ['HOST']
+         scriptname = os.environ['SCRIPT_NAME']
+         pathname = os.environ['PATH_NAME']
+         # print "http://
    #
    print "Content-Type: text/xml"
    print

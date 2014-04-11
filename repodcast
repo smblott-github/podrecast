@@ -1,12 +1,32 @@
 #!/usr/bin/env python
 
+# ###########################################################################
+# Imports...
+
 import os, sys, urllib2
 from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
-from fcntl import flock, LOCK_EX, LOCK_UN, LOCK_NB
+from fcntl    import flock, LOCK_EX, LOCK_NB
 
-cgi = "PATH_INFO" in os.environ
+# ###########################################################################
+# Globals, "constants", ...
+
+catchup = False
+errors = 0
 lock = None
+cgi = "PATH_INFO" in os.environ
+
+def done_file(fname):
+   return "." + fname + ".done"
+
+def download_file(fname):
+   return fname + ".repodcast_download"
+
+def feed_file():
+   return ".repodcast_feed.xml"
+
+# ###########################################################################
+# Utilities...
 
 def log(*args):
    if cgi:
@@ -20,6 +40,42 @@ def elog(*args):
    else:
       sys.stderr.write(" ".join(args) + "\n")
 
+def touch(fname):
+   log("touch:", fname)
+   with file(fname, 'a'):
+      os.utime(fname, None)
+
+def fd_copy(src,dst):
+   while True:
+      chunk = os.read(src,4096)
+      if not chunk:
+         break
+      os.write(dst,chunk)
+
+# Create (if necessary) and chdir to directory.
+# Return True if directory was created, False otherwise.
+#
+def chdir(directory):
+   try:
+      exists = os.path.isdir(directory)
+      if not exists:
+         log("creating:", directory)
+         os.makedirs(directory)
+      log("chdir:", directory)
+      os.chdir(directory)
+      return not exists
+   #
+   except OSError as error: 
+      if error.errno == os.errno.EEXIST and os.path.isdir(directory):
+         pass
+      else:
+         raise
+   except:
+      raise
+
+# ###########################################################################
+# Non-standard libraries...
+
 try:
    from requests import get
 except:
@@ -32,184 +88,19 @@ except:
    elog("import error: python-lxml not found")
    sys.exit(1)
 
-catchup = True
-catchup = False
+# ###########################################################################
+# Configuration...
 
-def fetch_url(url):
-   log("get:", url)
-   response = get(url)
-   if response.status_code != 200:
-      raise Exception("failed to download: " + url)
-   return response.content
-
-def parse(text,url):
-   try:
-      return objectify.fromstring(text)
-   except (KeyboardInterrupt, SystemExit):
-      raise
-   except Exception as error:
-      raise Exception("failed to parse rss: " + url)
-
-def fetch_feed(url):
-   text = fetch_url(url)
-   return parse(text,url)
-
-def chdir(directory):
-   try:
-      exists = os.path.isdir(directory)
-      if not exists:
-         log("creating:", directory)
-         os.makedirs(directory)
-      log("chdir:", directory)
-      os.chdir(directory)
-      return not exists
-   except (KeyboardInterrupt, SystemExit):
-      raise
-   except OSError as error: 
-      if error.errno == os.errno.EEXIST and os.path.isdir(directory):
-         pass
-
-def touch(fname, times=None):
-   log("touch:", fname)
-   with file(fname, 'a'):
-      os.utime(fname, times)
-
-def done_file(fname):
-   return "." + fname + ".done"
-
-def download_file(fname):
-   return fname + ".repodcast_download"
-
-def feed_file():
-   return ".repodcast_feed.xml"
-
-## def http_download_stream(url,fname):
-##    log("download stream:", url)
-##    tmp = None
-##    try:
-##       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.tmp")
-##       request = get(url, stream=True)
-##       for data in request.iter_content(chunk_size=4096): 
-##          if data:
-##             os.write(fd,data)
-##       request.close()
-##       os.close(fd)
-##       return tmp
-##    except:
-##       if tmp and os.path.exists(tmp):
-##          os.unlink(tmp)
-##       return None
-## 
-## def http_download_memory(url,fname):
-##    log("download to memory:", url)
-##    tmp = None
-##    try:
-##       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.tmp")
-##       request = get(url)
-##       os.write(fd,request.content)
-##       os.close(fd)
-##       return tmp
-##    except:
-##       if tmp and os.path.exists(tmp):
-##          os.unlink(tmp)
-##       raise
-
-def http_download_urllib(url,fname):
-   log("urllib2:", url)
-   tmp = None
-   try:
-      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.download.tmp")
-      request = urllib2.urlopen(url)
-      while True:
-         chunk = request.read(4096)
-         if not chunk:
-            break
-         os.write(fd,chunk)
-      #
-      os.close(fd)
-      return tmp
-   except:
-      if tmp and os.path.exists(tmp):
-         os.unlink(tmp)
-      raise
-
-def http_download(url,fname):
-   tmp = None
-   try:
-      log("download:", url)
-      tmp = http_download_urllib(url,fname)
-      #
-      # Would be better to respect umask, here...
-      os.chmod(tmp,0644)
-      os.rename(tmp,fname)
-      log("done:", fname)
-   except:
-      if tmp and os.path.exists(tmp):
-         os.unlink(tmp)
-      raise
-
-def handle_enclosure(catchup,enclosure):
-   attributes = enclosure.attrib
-   if not "url" in attributes:
-      elog("enclosure without url!")
-      return
-   #
-   url = urlparse(attributes["url"])
-   fname = os.path.basename(url.path)
-   #
-   if os.path.exists(fname):
-      log("ready:", fname)
-      return
-   #
-   if os.path.exists(download_file(fname)):
-      log("downloaded:", fname)
-      return
-   #
-   if os.path.exists(done_file(fname)):
-      # log("done:", fname)
-      return
-   #
-   if catchup:
-      touch(done_file(fname))
-      return
-   #
-   # OK.  Download the file.
-   http_download(urlunparse(url),download_file(fname))
-   touch(done_file(fname))
-
-def download_feed(catchup,directory,url):
-   cwd = os.getcwd()
-   enclosures = None
-   try:
-      catchup = chdir(directory) or catchup
-      feed = fetch_feed(url)
-      enclosures = feed.findall('.//channel/item/enclosure')
-   except (KeyboardInterrupt, SystemExit):
-      raise
-   except Exception:
-      chdir(cwd)
-      raise
-   #
-   for enclosure in enclosures:
-      handle_enclosure(catchup,enclosure)
-   #
-   tmp = None
-   try:
-      fd, tmp = mkstemp(dir=".", prefix=feed_file(), suffix=".repodget.feed.tmp")
-      os.write(fd,etree.tostring(feed))
-      os.close(fd)
-      os.chmod(tmp,0644)
-      os.rename(tmp,feed_file())
-   except:
-      if tmp and os.path.exists(tmp):
-         os.unlink(tmp)
-      raise
-   #
-   chdir(cwd)
+def choose_config():
+   configs = [ "./repodcast.conf", "~/.repodcast.conf", "/etc/repodcast.conf" ]
+   for config in configs:
+      config = os.path.expanduser(config)
+      if os.path.isfile(config) and os.access(config, os.R_OK):
+         return config
+   raise Exception("could not find config file: " + str(configs))
 
 def read_config(config,locking=False):
    global lock
-   lines = None
    #
    log("config:", config)
    try:
@@ -234,43 +125,133 @@ def read_config(config,locking=False):
    lines = [ line.split() for line in lines ]
    return lines
 
-def handle_config(config):
-   lines = read_config(config,True)
-   #
+# ###########################################################################
+# HTTP-GET...
+
+# Fetch a URL, return contents...
+#
+def fetch_url(url):
+   log("get:", url)
+   response = get(url)
+   if response.status_code != 200:
+      raise Exception("HTTP-get() failed [" + str(response.status_code) + "]: " + url)
+   return response.content
+
+# Download a URL, save in file...
+#
+def http_download(url,fname):
+   log("download:", url)
    try:
-      for line in lines:
+      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.download.tmp")
+      request = urllib2.urlopen(url)
+      while True:
+         chunk = request.read(4096)
+         if not chunk:
+            break
+         os.write(fd,chunk)
+      #
+      os.close(fd)
+      os.chmod(tmp,0644)
+      os.rename(tmp,fname)
+      log("done:", fname)
+      return tmp
+   except:
+      if tmp and os.path.exists(tmp):
+         os.unlink(tmp)
+      raise
+
+# ###########################################################################
+# Handle feeds and enclosures...
+
+def download_all_feeds(config):
+   for line in read_config(config,True):
+      if line[0] == "root":
          if len(line) != 2:
-            raise Exception("config: invalid feed line: " + str(line))
-         #
-         if line[0] == "root":
-            root = line[1]
-            if not os.path.isabs(root):
-               raise Exception("config: root must be an absolute path: " + str(line))
-            chdir(root)
-         else:
+            raise Exception("config: invalid root directive: " + str(line))
+         root = line[1]
+         if not os.path.isabs(root):
+            raise Exception("config: root must be an absolute path: " + str(line))
+         chdir(root)
+      else:
+         try:
+            if len(line) != 2:
+               raise Exception("config: invalid feed: " + str(line))
             directory, url = line
             download_feed(catchup,directory,url)
+         except (KeyboardInterrupt, SystemExit):
+            raise
+         except Exception as error:
+            elog("feed error:", directory, url, str(error))
+            errors += 1
+
+def download_feed(catchup,directory,url):
+   cwd = os.getcwd()
+   try:
+      catchup = chdir(directory) or catchup
+      text = fetch_url(url)
+      feed = objectify.fromstring(text)
+      enclosures = feed.findall('.//channel/item/enclosure')
+   except:
+      chdir(cwd)
+      raise
    #
-   except Exception as error:
-      elog("error:", str(error))
-      sys.exit(1)
+   for enclosure in enclosures:
+      try:
+         handle_enclosure(catchup,enclosure)
+      except (KeyboardInterrupt, SystemExit):
+         raise
+      except Exception as error:
+         elog("enclosure error:", str(error))
+         errors += 1
+   #
+   tmp = None
+   try:
+      fd, tmp = mkstemp(dir=".", prefix=feed_file(), suffix=".repodget.feed.tmp")
+      os.write(fd,etree.tostring(feed))
+      os.close(fd)
+      os.chmod(tmp,0644)
+      os.rename(tmp,feed_file())
+   except:
+      chdir(cwd)
+      if tmp and os.path.exists(tmp):
+         os.unlink(tmp)
+      raise
+   #
+   chdir(cwd)
 
-def choose_config():
-   configs = [ "./repodcast.conf", "~/.repodcast.conf", "/etc/repodcast.conf" ]
-   for config in configs:
-      config = os.path.expanduser(config)
-      if os.path.isfile(config) and os.access(config, os.R_OK):
-         return config
-   raise Exception("could not find config file: " + str(configs))
+def handle_enclosure(catchup,enclosure):
+   attributes = enclosure.attrib
+   if not "url" in attributes:
+      raise Eception("enclosure without url")
+   #
+   url = urlparse(attributes["url"])
+   fname = os.path.basename(url.path)
+   #
+   if os.path.exists(fname):
+      log("ready:", fname)
+      return
+   #
+   if os.path.exists(download_file(fname)):
+      log("downloaded:", fname)
+      return
+   #
+   if os.path.exists(done_file(fname)):
+      # log("done:", fname)
+      return
+   #
+   if catchup:
+      touch(done_file(fname))
+      return
+   #
+   # OK.  Download the file.
+   http_download(urlunparse(url),download_file(fname))
+   touch(done_file(fname))
 
-def main():
-   choose_config()
-   handle_config(choose_config())
-   sys.exit(0)
+# ###########################################################################
+# Handle cgi requests...
 
 def handle_cgi():
-   lines = read_config(choose_config())
-   lines = [ line for line in lines if line[0] == "root" ]
+   lines = [ line for line in read_config(choose_config()) if len(line) and line[0] == "root" ]
    #
    if len(lines) != 1 or len(lines[0]) != 2:
       elog("error: cannot serve CGI without a single root")
@@ -280,7 +261,7 @@ def handle_cgi():
    # path is not secure!
    root = lines[0][1]
    path = root + os.environ['PATH_INFO']
-   if os.path.isdir(path):
+   if os.path.isdir(path) and os.access(path, os.R_OK) and os.access(path, os.X_OK):
       return handle_cgi_directory(path)
    if os.path.isfile(path) and os.access(path, os.R_OK):
       return handle_cgi_file(path)
@@ -289,24 +270,21 @@ def handle_cgi():
    sys.exit(1)
    #
 
+# ###########################################################################
+# Handle cgi requests for feeds...
+
 def handle_cgi_directory(path):
    chdir(path)
-   #
-   if not os.path.isfile(feed_file()):
-      elog("error: feed file does not exist:", path + "/" + feed_file())
-      sys.exit(1)
    #
    if not os.path.isfile(feed_file()) or not os.access(feed_file(), os.R_OK):
       elog("error: cannot read feed file:", path + "/" + feed_file())
       sys.exit(1)
    #
-   text = None
    with open(feed_file()) as fd:
       text = fd.read()
-   feed = parse(text,"file://" + path + "/" + feed_file())
+   feed = objectify.fromstring(text)
    #
-   enclosures = feed.findall('.//channel/item/enclosure')
-   for enclosure in enclosures:
+   for enclosure in feed.findall('.//channel/item/enclosure'):
       attributes = enclosure.attrib
       url = urlparse(attributes["url"])
       fname = os.path.basename(url.path)
@@ -327,28 +305,33 @@ def handle_cgi_directory(path):
    print etree.tostring(feed)
    sys.exit(0)
 
-def fd_copy(src,dst):
-   while True:
-      chunk = os.read(src,4096)
-      if not chunk:
-         break
-      os.write(dst,chunk)
+# ###########################################################################
+# Handle cgi requests for files...
 
 def handle_cgi_file(path):
+   # Perhaps look up the MIME type?
+   #
    print "Content-Type: audio/mpeg"
    print
    # Flush standard output.  We are about to start using its file
    # descriptor directly.
    #
    sys.stdout.flush()
-   #
    fd = os.open(path, os.O_RDONLY)
    fd_copy(fd,sys.stdout.fileno())
    sys.exit(0)
+
+# ###########################################################################
+# Main...
 
 if __name__ == "__main__":
    if cgi:
       handle_cgi()
    else:
-      main()
+      download_all_feeds(choose_config())
+      if ( 0 < errors ):
+         elog("errors:", str(errors))
+         sys.exit(1)
+   #
+   sys.exit(0)
 

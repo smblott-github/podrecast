@@ -23,7 +23,7 @@ For me, two reasons:
 
 ## What?
 
-PodRecast is a podcasts aggregator for:
+PodRecast is a podcast aggregator for:
 
 - downloading podcasts to a local system,
 - reprocessing with tools such as MP3Gain, and
@@ -58,3 +58,10 @@ My own `crontab` reads like:
 (`chronic` is part of the [more utils](https://github.com/madx/moreutils)
 package.  It simplifies crontabs and is well worth a look.
 
+Then: `podrecast` is also a CGI script. Install it (also) in suitable location
+(such as `/usr/lib/cgi-bin`) and:
+
+- URLs such as `http://SERVER/cgi-bin/podcast/Cycling/Velo-Cast` deliver the
+  associated rss/xml feed, and
+- URLs such as `http://SERVER/cgi-bin/podcast/Cycling/Velo-Cast/SOME_FILE.mp3`
+  deliver the associated MP3 content.

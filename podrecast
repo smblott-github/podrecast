@@ -11,21 +11,6 @@ from fcntl import flock, LOCK_EX, LOCK_NB
 # ###########################################################################
 # Globals and "constants", ...
 
-# Configuration files.
-# The first available configuration file is chosen.
-#
-# If using the CGI functionality of podrecast, then it makes sense to use
-# "/etc/podrecast.conf" or "/usr/local/etc/podrecast.conf", because these are
-# the only two which are findable by all users, including the user account
-# under which the web server is running.
-#
-configs = [ 
-            "./podrecast.conf",
-            "~/.podrecast.conf",
-            "/usr/local/etc/podrecast.conf",
-            "/etc/podrecast.conf"
-            ]
-
 catchup = False
 errors = 0
 lock = None
@@ -39,6 +24,22 @@ def download_file(fname):
 
 def feed_file():
    return ".podrecast_feed.xml"
+
+# Configuration files.
+# The first available configuration file is chosen.
+#
+# If using the CGI functionality of podrecast, then it makes sense to use
+# "/etc/podrecast.conf" or "/usr/local/etc/podrecast.conf", because these are
+# the only two which are findable by all users, including the user account
+# under which the web server is running.
+#
+
+configs = [ 
+            "./podrecast.conf",
+            "~/.podrecast.conf",
+            "/usr/local/etc/podrecast.conf",
+            "/etc/podrecast.conf"
+            ]
 
 # ###########################################################################
 # Utilities...

@@ -31,12 +31,18 @@ Key idea:
 The functionality is as follows:
 
 - Download feeds and podcasts to local storage.
+
 - Podcasts, when downloaded, are initially given a name which is *not*
   republished (they are given a distinctive suffix).
+
 - Some local post-processing happens (typically, a cron job), and podcast files
-  are renamed such that they may now be republished.  This is your responsibility.
+  are renamed such that they may now be republished.  This is your
+  responsibility.  After post-processing, rename the files, dropping the
+  distinctive suffix).
+
 - PodRecast, serving now as a CGI script, then publishes *exactly* the original feed's
-  rss/XML, but with each enclosure's URL replaced with a local URL.
+  rss/XML, but with each enclosure's URL replaced with a local URL referencing
+  a local, post-processed file.
 
 ## How?
 

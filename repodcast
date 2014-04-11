@@ -84,11 +84,12 @@ def http_download(url,fname):
    try:
       print "download:", url
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.tmp")
-      req = get(url, stream=True)
-      for data in req.iter_content(chunk_size=4096): 
+      request = get(url, stream=True)
+      for data in request.iter_content(chunk_size=4096): 
          if data:
             os.write(fd,data)
       os.close(fd)
+      #
       # Would be better to respect umask, here...
       os.chmod(tmp,0644)
       os.rename(tmp,fname)
@@ -218,9 +219,18 @@ def handle_config(conf):
    #
    return errors
 
+def choose_config():
+   configs = [ "./repodcast.conf", "~/.repodcast.conf", "/etc/repodcast.conf" ]
+   for config in configs:
+      config = os.path.expanduser(config)
+      if os.path.isfile(config) and os.access(config, os.R_OK):
+         return config
+   raise Exception("could not find config file: " + str(configs))
+
 if __name__ == "__main__":
    errors = 0
-   errors += handle_config("./repodcast.conf")
+   choose_config()
+   errors += handle_config(choose_config())
    #
    if 0 < errors:
       sys.stderr.write("feed errors: " + str(errors) + "\n")

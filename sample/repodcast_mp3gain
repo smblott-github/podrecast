@@ -46,15 +46,19 @@ fi
 
 __do_mp3gain ()
 {
-   local file="$1"
+   local file="$argv[1]"
    local nfile="${file%.repodcast_download}"
    print "file from:" $file
    print "file to:" $nfile
    (
-      flock -x -n 9                                      \
-         && nice nice mp3gain -r -c -p -t -m $gain $file \
-         && [[ $file != $nfile ]]                        \
-         && mv -v $file $nfile
+      if flock -x -n 9
+      then
+         nice nice mp3gain -r -c -p -t -m $gain $file \
+            && [[ $file != $nfile ]]                  \
+            && mv -v $file $nfile
+      else
+         print "failed to lock:" $file
+      fi
    ) 9< $file
 }
 

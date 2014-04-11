@@ -1,0 +1,86 @@
+#!/usr/bin/env zsh
+
+local gain=6
+local suffix='.repodcast_download'
+
+# ###########################################################################
+# Do we have mp3gain...?
+
+if ! which mp3gain > /dev/null
+then
+   print "error: could not find mp3gain executable" >&2
+   exit 1
+fi
+
+# ###########################################################################
+# Find config file...
+
+local config
+
+() {
+   local conf
+   for conf
+      [[ -z $config && -n $conf && -f $conf && -r $conf ]] && config=$conf
+} ./repodcast.conf ~/.repodcast.conf /usr/local/etc/repodcast.conf /etc/repodcast.conf
+
+if [[ -z $config ]]
+then
+   print "error: could not find repodcast.conf" >&2
+   exit 1
+fi
+
+print "config: $config"
+
+# ###########################################################################
+# Find roots...
+
+local -a roots
+
+grep -v '^\s*#' $config    \
+   | sed -r 's/^\s*//'     \
+   | sed -r 's/\s{1,}/ /'  \
+   | sed -n '/root\>/ p'   \
+   | cut -d' ' -f 2        \
+   | read -A roots
+
+print "roots:" $roots
+
+if (( $#roots == 0 ))
+then
+   print "error: could not find any root directories" >&2
+   exit 1
+fi
+
+# ###########################################################################
+# Do mp3gain...
+
+__do_mp3gain ()
+{
+   local src="$argv[1]"
+   local dst="${src%$suffix}"
+
+   print "from:" $src
+   print "to:" $dst
+   (
+      if flock -x -n 9
+      then
+         nice nice mp3gain -r -c -p -t -m $gain $src \
+            && [[ $src != $dst ]]                 \
+            && mv -v $src $dst
+      else
+         print "failed to lock:" $src
+      fi
+   ) 9< $src
+}
+
+# ###########################################################################
+# Apply __do_mp3gain...
+
+local root
+autoload -U zargs
+
+print "suffix:" $suffix
+
+for root in $roots
+   zargs -r -L 1 -- $root/**/*$suffix(N.) -- __do_mp3gain
+

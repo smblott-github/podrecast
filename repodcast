@@ -1,0 +1,364 @@
+#!/usr/bin/env python
+
+# ###########################################################################
+# Imports...
+
+import os, sys, urllib2
+from urlparse import urlparse, urlunparse
+from tempfile import mkstemp
+from fcntl import flock, LOCK_EX, LOCK_NB
+
+# ###########################################################################
+# Globals and "constants", ...
+
+# Configuration files.
+# The first available configuration file is chosen.
+#
+# If using the CGI functionality of repodcast, then it makes sense to use
+# "/etc/repodcast.conf" or "/usr/local/etc/repodcast.conf", because these are
+# the only two which are findable by all users, including the user account
+# under which the web server is running.
+#
+configs = [ 
+            "./repodcast.conf",
+            "~/.repodcast.conf",
+            "/usr/local/etc/repodcast.conf",
+            "/etc/repodcast.conf"
+            ]
+
+catchup = False
+errors = 0
+lock = None
+cgi = "PATH_INFO" in os.environ
+
+def done_file(fname):
+   return "." + fname + ".done"
+
+def download_file(fname):
+   return fname + ".repodcast_download"
+
+def feed_file():
+   return ".repodcast_feed.xml"
+
+# ###########################################################################
+# Utilities...
+
+def log(*args):
+   if cgi:
+      print "X-REPODGET-LOG:", " ".join(args)
+   else:
+      print " ".join(args)
+
+def elog(*args):
+   if cgi:
+      print "X-REPODGET-ERROR:", " ".join(args)
+   else:
+      sys.stderr.write(" ".join(args) + "\n")
+
+def touch(fname):
+   log("touch:", fname)
+   with file(fname, 'a'):
+      os.utime(fname, None)
+
+def fd_copy(src,dst):
+   while True:
+      chunk = os.read(src,4096)
+      if not chunk:
+         return
+      os.write(dst,chunk)
+
+# Create (if necessary) and chdir to directory.
+# Return True if directory was created, False otherwise.
+#
+def chdir(directory):
+   created = False
+   try:
+      if os.path.exists(directory) and not os.path.isdir(directory):
+         raise Exception("exists, but is not a directory: " + directory)
+      if not os.path.isdir(directory):
+         log("creating:", directory)
+         created = False
+         os.makedirs(directory)
+      #
+      log("chdir:", directory)
+      os.chdir(directory)
+   #
+   except OSError as error: 
+      if error.errno == os.errno.EEXIST and os.path.isdir(directory):
+         pass
+      else:
+         raise
+   #
+   return created
+
+# ###########################################################################
+# Non-standard libraries...
+
+try:
+   from requests import get
+except:
+   elog("import error: package/module python-requests not found")
+   sys.exit(1)
+
+try:
+   from lxml import objectify, etree
+except:
+   elog("import error: package/module python-lxml not found")
+   sys.exit(1)
+
+# ###########################################################################
+# Configuration...
+
+def choose_config():
+   for config in configs:
+      config = os.path.expanduser(config)
+      if os.path.isfile(config) and os.access(config, os.R_OK):
+         log("config:", config)
+         return config
+   raise Exception("could failed to find config file: " + str(configs))
+
+def read_config(config,locking=False):
+   global lock
+   try:
+      lock = fd = open(config)
+      lines = fd.readlines()
+      if locking:
+         try:
+            flock(lock.fileno(), LOCK_EX | LOCK_NB)
+         except:
+            raise Exception("locking, would block")
+      else:
+         lock = None
+         fd.close()
+   except Exception as error:
+      raise Exception("config: failed to read: " + config + "; " + str(error))
+   #
+   lines = [ line.strip() for line in lines ]
+   lines = [ line for line in lines if len(line) ]
+   lines = [ line for line in lines if not line.startswith("#") ]
+   lines = [ line.split() for line in lines ]
+   return lines
+
+# ###########################################################################
+# HTTP-GET...
+
+# Fetch a URL, return contents...
+#
+def fetch_url(url):
+   log("get:", url)
+   response = get(url)
+   if response.status_code != 200:
+      raise Exception("HTTP-get() failed [" + str(response.status_code) + "]: " + url)
+   return response.content
+
+# Download a URL, save in file...
+#
+# This uses urllib2, instead of python-requests.  It would be nice to
+# use the latter.  However, the "stream=True"-option support across systems
+# seems to be unreliable.
+#
+# FIXME:
+#   Unlike python-requests (which is used for feeds), this does not use
+#   "~/.netrc" for authentication.
+#
+def http_download(url,fname):
+   log("download:", url)
+   tmp = None
+   try:
+      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".repodget.download.tmp")
+      request = urllib2.urlopen(url)
+      while True:
+         chunk = request.read(4096)
+         if not chunk:
+            break
+         os.write(fd,chunk)
+      #
+      os.close(fd)
+      request.close()
+      # TODO:
+      # Respect umask.
+      os.chmod(tmp,0644)
+      os.rename(tmp,fname)
+      log("done:", fname)
+      return tmp
+   except:
+      if tmp and os.path.exists(tmp):
+         os.unlink(tmp)
+      raise
+
+# ###########################################################################
+# Handle feeds and enclosures...
+
+def download_feeds(config):
+   for line in read_config(config,True):
+      if line[0] == "root":
+         if len(line) != 2:
+            raise Exception("config: invalid root directive: " + str(line))
+         root = line[1]
+         if not os.path.isabs(root):
+            raise Exception("config: root must be an absolute path: " + str(line))
+         chdir(root)
+      else:
+         try:
+            if len(line) != 2:
+               raise Exception("config: invalid feed: " + str(line))
+            directory, url = line
+            download_feed(catchup,directory,url)
+         except (KeyboardInterrupt, SystemExit):
+            raise
+         except Exception as error:
+            elog("feed error:", directory, url, str(error))
+            errors += 1
+
+def download_feed(catchup,directory,url):
+   cwd = os.getcwd()
+   try:
+      catchup = chdir(directory) or catchup
+      text = fetch_url(url)
+      feed = objectify.fromstring(text)
+      enclosures = feed.findall('.//channel/item/enclosure')
+   except:
+      chdir(cwd)
+      raise
+   #
+   for enclosure in enclosures:
+      try:
+         handle_enclosure(catchup,enclosure)
+      except (KeyboardInterrupt, SystemExit):
+         raise
+      except Exception as error:
+         elog("enclosure error:", str(error))
+         errors += 1
+   #
+   tmp = None
+   try:
+      fd, tmp = mkstemp(dir=".", prefix=feed_file(), suffix=".repodget.feed.tmp")
+      os.write(fd,etree.tostring(feed))
+      os.close(fd)
+      # TODO:
+      # Respect umask.
+      os.chmod(tmp,0644)
+      os.rename(tmp,feed_file())
+   except:
+      if tmp and os.path.exists(tmp):
+         os.unlink(tmp)
+      chdir(cwd)
+      raise
+   #
+   chdir(cwd)
+
+def handle_enclosure(catchup,enclosure):
+   attributes = enclosure.attrib
+   if not "url" in attributes:
+      raise Eception("enclosure without url")
+   #
+   url = urlparse(attributes["url"])
+   fname = os.path.basename(url.path)
+   #
+   if os.path.exists(fname):
+      log("ready:", fname)
+      return
+   #
+   if os.path.exists(download_file(fname)):
+      log("downloaded:", fname)
+      return
+   #
+   if os.path.exists(done_file(fname)):
+      # log("done:", fname)
+      return
+   #
+   if catchup:
+      touch(done_file(fname))
+      return
+   #
+   # OK.  Download the file.
+   http_download(urlunparse(url),download_file(fname))
+   touch(done_file(fname))
+
+# ###########################################################################
+# Handle cgi requests...
+
+def handle_cgi():
+   lines = [ line for line in read_config(choose_config()) if len(line) and line[0] == "root" ]
+   #
+   if len(lines) != 1 or len(lines[0]) != 2:
+      elog("error: cannot serve CGI without a single root")
+      sys.exit(1)
+   #
+   # TODO:
+   # path is not secure!
+   root = lines[0][1]
+   path = root + os.environ['PATH_INFO']
+   if os.path.isdir(path) and os.access(path, os.R_OK) and os.access(path, os.X_OK):
+      return handle_cgi_directory(path)
+   if os.path.isfile(path) and os.access(path, os.R_OK):
+      return handle_cgi_file(path)
+   #
+   elog("error: does not exist:", path)
+   sys.exit(1)
+   #
+
+# ###########################################################################
+# Handle cgi requests for feeds...
+
+def handle_cgi_directory(path):
+   chdir(path)
+   #
+   if not os.path.isfile(feed_file()) or not os.access(feed_file(), os.R_OK):
+      elog("error: cannot read feed file:", path + "/" + feed_file())
+      sys.exit(1)
+   #
+   with open(feed_file()) as fd:
+      text = fd.read()
+   feed = objectify.fromstring(text)
+   #
+   for enclosure in feed.findall('.//channel/item/enclosure'):
+      attributes = enclosure.attrib
+      url = urlparse(attributes["url"])
+      fname = os.path.basename(url.path)
+      if not os.path.isfile(fname) or not os.access(fname, os.R_OK):
+         item = enclosure.getparent()
+         item.getparent().remove(item)
+      else:
+         # Content is available...
+         #
+         host = os.environ['HTTP_HOST']
+         scriptname = os.environ['SCRIPT_NAME']
+         pathinfo = os.environ['PATH_INFO']
+         attributes["url"] = "http://" + host + scriptname + pathinfo + "/" + fname
+   #
+   print "Content-Type: text/xml"
+   print
+   print etree.tostring(feed)
+   sys.exit(0)
+
+# ###########################################################################
+# Handle cgi requests for files...
+
+def handle_cgi_file(path):
+   # Perhaps look up the MIME type?
+   #
+   print "Content-Type: audio/mpeg"
+   print
+   # Flush standard output.  We are about to start using its file
+   # descriptor directly.
+   #
+   sys.stdout.flush()
+   fd = os.open(path, os.O_RDONLY)
+   fd_copy(fd,sys.stdout.fileno())
+   sys.exit(0)
+
+# ###########################################################################
+# Main...
+
+if __name__ == "__main__":
+   if cgi:
+      handle_cgi()
+   else:
+      download_feeds(choose_config())
+      if ( 0 < errors ):
+         elog("errors:", str(errors))
+         sys.exit(1)
+   #
+   sys.exit(0)
+

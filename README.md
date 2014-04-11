@@ -49,7 +49,7 @@ do let me know how you get on -- post an issue.
 
 - Install `podrecast` in some suitable location, possibly `/usr/local/bin`.
 - There's a sample configuration file [here](https://github.com/smblott-github/podrecast/blob/master/sample/repodcast.conf).  This should go, most likely, in `/etc/podrecast.conf`.
-- There's a sample post-processing script [here](https://github.com/smblott-github/podrecast/blob/master/script/podrecast_mp3gain); zsh required.
+- And there's a sample post-processing script [here](https://github.com/smblott-github/podrecast/blob/master/script/podrecast_mp3gain); zsh required.
 
 My own `crontab` reads like:
 
@@ -59,10 +59,15 @@ My own `crontab` reads like:
 (`chronic` is part of the [more utils](https://github.com/madx/moreutils)
 package.  It simplifies crontabs and is well worth a look.)
 
-Then: `podrecast` is also a CGI script. Install it (also) in suitable location
-(such as `/usr/lib/cgi-bin`) and:
+`podrecast` is also a CGI script. Install it (also) in suitable location
+(such as `/usr/lib/cgi-bin`). Then:
 
 - URLs such as `http://SERVER/cgi-bin/podrecast/Cycling/Velo-Cast` deliver the
   associated rss/xml feed, and
 - URLs such as `http://SERVER/cgi-bin/podrecast/Cycling/Velo-Cast/SOME_FILE.mp3`
   deliver the associated MP3 content.
+
+## Warning
+
+Do not install the `podrecast` script as a CGI script on a public network. It
+is *not* secure.

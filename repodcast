@@ -163,7 +163,7 @@ def http_download(url,fname):
 # ###########################################################################
 # Handle feeds and enclosures...
 
-def download_all_feeds(config):
+def download_feeds(config):
    for line in read_config(config,True):
       if line[0] == "root":
          if len(line) != 2:
@@ -204,7 +204,6 @@ def download_feed(catchup,directory,url):
          elog("enclosure error:", str(error))
          errors += 1
    #
-   tmp = None
    try:
       fd, tmp = mkstemp(dir=".", prefix=feed_file(), suffix=".repodget.feed.tmp")
       os.write(fd,etree.tostring(feed))
@@ -212,9 +211,9 @@ def download_feed(catchup,directory,url):
       os.chmod(tmp,0644)
       os.rename(tmp,feed_file())
    except:
-      chdir(cwd)
       if tmp and os.path.exists(tmp):
          os.unlink(tmp)
+      chdir(cwd)
       raise
    #
    chdir(cwd)
@@ -327,7 +326,7 @@ if __name__ == "__main__":
    if cgi:
       handle_cgi()
    else:
-      download_all_feeds(choose_config())
+      download_feeds(choose_config())
       if ( 0 < errors ):
          elog("errors:", str(errors))
          sys.exit(1)

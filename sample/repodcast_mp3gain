@@ -1,0 +1,70 @@
+#!/usr/bin/env zsh
+
+local gain=6
+
+# ###########################################################################
+# Find config file...
+
+local config
+
+() {
+   local conf
+   for conf
+      [[ -z $config && -n $conf && -f $conf && -r $conf ]] && config=$conf
+} ./repodcast.conf ~/.repodcast.conf /etc/repodcast.conf
+
+if [[ -z $config ]]
+then
+   print "error: could not find repodcast.conf" >&2
+   exit 1
+fi
+
+print "config: $config"
+
+# ###########################################################################
+# Find roots...
+
+local -a roots
+
+grep -v '^\s*#' $config    \
+   | sed -r 's/^\s*//'     \
+   | sed -r 's/\s{1,}/ /'  \
+   | sed -n '/root\>/ p'   \
+   | cut -d' ' -f 2        \
+   | read -A roots
+
+print "roots:" $roots
+
+if (( $#roots == 0 ))
+then
+   print "error: could not find any root directories" >&2
+   exit 1
+fi
+
+# ###########################################################################
+# Do mp3gain...
+
+__do_mp3gain ()
+{
+   local file="$1"
+   local nfile="${file%.repodcast_download}"
+   print "file from:" $file
+   print "file to:" $nfile
+   (
+      flock -x -n 9                                      \
+         && nice nice mp3gain -r -c -p -t -m $gain $file \
+         && [[ $file != $nfile ]]                        \
+         && mv -v $file $nfile
+   ) 9< $file
+}
+
+local root
+autoload -U zargs
+
+for root in $roots
+do
+   zargs -r -L 1 -- $root/**/*.repodcast_download(N.) -- __do_mp3gain
+done
+
+
+

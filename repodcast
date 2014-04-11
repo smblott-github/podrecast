@@ -290,8 +290,7 @@ def handle_cgi_directory(path):
       fname = os.path.basename(url.path)
       if not os.path.isfile(fname) or not os.access(fname, os.R_OK):
          item = enclosure.getparent()
-         channel = item.getparent()
-         channel.remove(item)
+         item.getparent().remove(item)
       else:
          # Content is available...
          #

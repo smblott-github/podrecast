@@ -7,7 +7,7 @@ import os, sys
 from tempfile   import mkstemp
 from urlparse   import urlparse, urlunparse
 from fcntl      import flock, LOCK_EX, LOCK_NB
-from subprocess import call
+from subprocess import call, Popen, PIPE
 from optparse   import OptionParser
 from copy       import copy
 
@@ -111,6 +111,9 @@ def chdir(directory):
    log("chdir:", directory)
    os.chdir(directory)
 
+# ###########################################################################
+# Wget...
+
 def wget(url,fname,options=[]):
    tmp = None
    extras = [ '-q' ] if not sys.stdout.isatty() else []
@@ -127,6 +130,26 @@ def wget(url,fname,options=[]):
       if tmp and os.path.exists(tmp):
          os.unlink(tmp)
       raise
+
+# ###########################################################################
+# MIME types, encodings...
+
+def mime_file(fname,fallback,arg):
+   pipe = None
+   try:
+      with open(os.devnull,"w") as devnull:
+         pipe = Popen(['file', '-b', arg, fname], stdout=PIPE, stderr=devnull)
+      result = pipe.stdout.readline().strip()
+      if pipe.wait() == 0 and result:
+         return result
+   except:
+      return fallback
+
+def mime_type(fname,fallback):
+   return mime_file(fname,fallback,'--mime-type')
+
+def mime_encoding(fname,fallback):
+   return mime_file(fname,fallback,'--mime-encoding')
 
 # ###########################################################################
 # Non-standard libraries...
@@ -335,26 +358,24 @@ def handle_cgi_directory(path):
       path_info = os.environ['PATH_INFO']
       attributes["url"] = "http://" + http_host + script_name + path_info + "/" + fname
    #
-   print "Content-Type: text/xml"
+   mime = 'text/xml'
+   encoding = mime_encoding(feed_file(), "utf-8");
+   print 'Content-Type:', mime
    print
-   print etree.tostring(feed,pretty_print=True, xml_declaration=True)
-   sys.exit(0)
+   print etree.tostring(feed, pretty_print=True, xml_declaration=True, encoding=encoding)
 
 # ###########################################################################
 # Handle cgi requests for files...
 
 def handle_cgi_file(path):
-   #
-   # FIX:
-   # Look up the MIME type.
+   mime = mime_type(path, 'audio/mpeg')
    stat = os.stat(path)
-   print "Content-Type: audio/mpeg"
-   print "Content-Length: ", stat.st_size
+   print 'Content-Type:', mime
+   print 'Content-Length:', stat.st_size
    print
    sys.stdout.flush()
    fd = os.open(path, os.O_RDONLY)
    fd_copy(fd,sys.stdout.fileno())
-   sys.exit(0)
 
 # ###########################################################################
 # Root directories...

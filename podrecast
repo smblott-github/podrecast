@@ -81,13 +81,14 @@ def chdir(directory):
    os.chdir(directory)
    return created
 
-def wget(url,fname):
+def wget(url,fname,options=[]):
    tmp = None
+   extra = [] if sys.stdout.isatty() else [ '-q' ]
    log("wget:", url)
    try:
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
       os.close(fd)
-      status = call([ 'wget', '-O', tmp, url])
+      status = call([ 'wget', '-O', tmp ] + options + extra + [ url ])
       os.chmod(tmp,0644)
       os.rename(tmp,fname)
       log("done:", fname)
@@ -173,7 +174,7 @@ def download_feed(catchup,directory,url):
    cwd = os.getcwd()
    try:
       catchup = chdir(directory) or catchup
-      wget(url,feed_file())
+      wget(url,feed_file(),['-q'])
       text = slurp(feed_file())
       feed = objectify.fromstring(text)
       enclosures = feed.findall('.//channel/item/enclosure')

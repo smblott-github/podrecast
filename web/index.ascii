@@ -1,0 +1,132 @@
+= PodRecast =
+Stephen Blott <smblott+prc@gmail.com>
+// :toc2:
+
+_PodRecast_ (or _PRC_) is a podcast aggregator for post-processing then
+re-publishing podcasts.
+
+// /////////////////////////////////////////////////////
+== Download/Installation ==
+
+.Currently:
+****
+- you need to clone the https://github.com/smblott-github/podrecast[git
+  repository], and install from there.
+****
+
+// /////////////////////////////////////////////////////
+== Why? ==
+
+****
+For me, two reasons:
+
+- Podcast loudness can vary greatly across feeds.  Some can be too
+  loud, some too quiet.  And I don't want to fiddle with the
+  volume for each new podcast. +
+  Post-processing with utilities such as
+  http://mp3gain.sourceforge.net/[MP3Gain] can be used to make all podcasts sound equally loud, eliminating the need to fiddle with the volume.
+
+- In the EU, there are rules governing the maximum power output which consumer
+  devices, such as smart phones, can generate through headphones.  In a noisy
+  environment (for me, that's when cycling) the mandated maximum output
+  level can be too low, particularly for spoken podcasts. +
+  Again, http://mp3gain.sourceforge.net/[MP3Gain] can be used to
+  pre-boost the gain such that podcasts can be listened to comfortably in
+  both quiet and noisy environments.
+
+_PRC_ enables such post processing by downloading podcasts to a local
+system, then republishing them.
+****
+
+// /////////////////////////////////////////////////////
+== What? ==
+
+.Key idea:
+****
+- republish podcasts, keeping the rss/xml exactly as it was, except replacing
+  enclosure URLs with URLs referencing local, post-processed files.
+
+By keeping the rss/xml exactly as it originally was, metadata such as the
+title, the publication date, the GUID and any associated imagery remain
+embedded in the feed.
+****
+
+.The workflow is as follows:
+****
+- Download feeds and new podcasts to local storage, typically via a cron job. +
+  _PRC_ does this.
+
+- Post-process podcasts. +
+  _PRC_ does not do this, although there is a suitable MP3Gain
+  post-processing script in the repository.
+
+- _PRC_, serving now as a CGI script, then publishes *exactly* the original feed's
+  rss/XML, but with each enclosure's URL replaced with a local URL referencing
+  a local, post-processed file. +
+  _PRC_ does this.
+****
+
+// /////////////////////////////////////////////////////
+== How? ==
+
+.Installation and configuration.
+****
+. Install `podrecast` in some suitable location, possibly `/usr/local/bin`.
+
+. There's a sample configuration file in the `sample` directory.
+  This should go, most likely, in `/etc/podrecast.conf`. +
+  (The configuration file needs to be in a system-wide location so that `podrecast` can find it when running as a CGI script.)
+
+. Install `podrecast` (also) as a CGI script in some suitable location,
+  possibly `/usr/lib/cgi-bin`.  Of course, CGI needs to be enabled on your
+  web server.
+
+. Schedule post processing. +
+  When `podrecast` downloads podcast files, it appends the suffix `.podrecast_download`.
+  Whatever post processing you plan, the file should be renamed (that is,
+  the suffix stripped) once that post processing is complete.  Only then
+  will _PRC_ serve the file via its CGI interface. +
+  There's a sample post-processing script in the `script` directory of the
+  git repository.
+****
+
+.The CGI server:
+****
+- URLs such as `http://SERVER/cgi-bin/podrecast/Cycling/Velo-Cast` deliver the
+  associated rss/xml feed, and
+- URLs such as `http://SERVER/cgi-bin/podrecast/Cycling/Velo-Cast/SOME_FILE.mp3`
+  deliver the associated podcast content.
+****
+
+.Set up cron.
+****
+My own `crontab` reads like:
+
+----
+05 2,12,17,20,23 * * * chronic podrecast -a
+55 2,12,17,20,23 * * * chronic podrecast_mp3gain
+----
+
+(`chronic` is part of the https://joeyh.name/code/moreutils/[moreutils]
+package.  It simplifies crontabs and is well worth a look.)
+****
+
+.Command line arguments:
+****
+`-m MAX`::
+   The maximum number of podcasts to download, per feed.  The default is
+   `0`, meaning download all available podcasts.
+`-c`::
+   Catch up.  Mark all podcasts are downloaded, but do not actually download them.
+`-a`::
+   Auto catch up.  Whenever (and only when) _PRC_ encounters
+   a newly-configured feed, it marks all content as downloaded, but does
+   not actually download them. +
+   The idea is that newly-configured feeds may contain tens or even hundreds of
+   podcasts, for more than you actually want to download.
+`-r`::
+   Just output the root directory.  Useful for post-processing scripts to
+   find files for post processing.
+****
+
+// vim: set syntax=asciidoc:

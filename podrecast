@@ -68,7 +68,6 @@ def elog(*args):
    else:   sys.stderr.write(" ".join(args) + "\n")
 
 def touch(fname):
-   log("touch:", fname)
    with file(fname, 'a'):
       os.utime(fname, None)
 
@@ -212,6 +211,15 @@ def handle_enclosure(enclosure,options):
    url = urlparse(attributes["url"])
    fname = os.path.basename(url.path)
    #
+   if os.path.exists(done_file(fname)):
+      # Touch the done_file().  That way, done_file()s which are older than the
+      # feed file itself no longer occur in the feed, and might safely be
+      # deleted.  This must, therefore, be the first of this sequence of steps.
+      #
+      touch(done_file(fname))
+      # log("done:", fname)
+      return
+   #
    if os.path.exists(fname):
       log("ready:", fname)
       return
@@ -220,11 +228,8 @@ def handle_enclosure(enclosure,options):
       log("downloaded:", fname)
       return
    #
-   if os.path.exists(done_file(fname)):
-      # log("done:", fname)
-      return
-   #
    if options.catchup:
+      log("touch:", fname)
       touch(done_file(fname))
       return
    #

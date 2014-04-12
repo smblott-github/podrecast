@@ -54,6 +54,13 @@ fi
 # ###########################################################################
 # Do mp3gain...
 
+local -a extras
+
+if ! [[ -t 1 ]]
+then
+   extras+=( '-q' )
+fi
+
 __do_mp3gain ()
 {
    local src="$argv[1]"
@@ -64,8 +71,8 @@ __do_mp3gain ()
    (
       if flock -x -n 9
       then
-         nice nice mp3gain -r -c -p -t -m $gain $src \
-            && [[ $src != $dst ]]                 \
+         nice nice mp3gain -r -c -p -t -m $gain $extras $src \
+            && [[ $src != $dst ]]                            \
             && mv -v $src $dst
       else
          print "failed to lock:" $src

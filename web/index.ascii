@@ -134,6 +134,13 @@ package.  It simplifies and improves crontabs, and is well worth a look.)
 // /////////////////////////////////////////////////////
 == Final Comments ==
 
+.Authentication:
+****
+`podrecast` uses `wget` for all downloads.  For authenticated feeds, create
+a suitable `.netrc` entry. +
+`wget` consults `.netrc` for usernames and passwords.
+****
+
 .Locking.
 ****
 `podrecast` locks (with `flock`) its configuration file to prevent two instances running
@@ -143,7 +150,7 @@ see below...)
 
 .File names.
 ****
-`podrecast` handles all downloads via temporary files.  Therefore, you
+`podrecast` handles all downloads via temporary files (c.f. `mkstemp`).  Therefore, you
 should not encounter partial downloads with normal-looking file names.
 ****
 
@@ -152,14 +159,19 @@ should not encounter partial downloads with normal-looking file names.
 `podrecast` _does not_ delete downloaded files.  Just use cron and
 `find` for that:
 
-- `find /MY/ROOT/DIRECTORY -type f -name '[^\.]*' -mtime +20 -delete`
+----
+find /MY/ROOT/DIRECTORY -type f -name '[^.]*' -mtime +20 -delete
+----
+
 
 `podrecast` stores its state in hidden files in the podcast directory
 itself.  Whenever it downloads a feed, it touches all of the state files
 related to enclosures mentioned in the feed.  Therefore, state files with
-old modification times can (probably) be safely deleted.  Something like:
+old modification times can be safely deleted.  Something like:
 
-- `find /MY/ROOT/DIRECTORY -type f -name '.*.podrecast_done' -mtime +20 -delete`
+----
+find /MY/ROOT/DIRECTORY -type f -name '.*.podrecast_done' -mtime +20 -delete
+----
 
 However, there are usually not so many state files and they take up next
 to no space, so I just let them be.
@@ -167,10 +179,14 @@ to no space, so I just let them be.
 
 .CGI.
 ****
-`podrecast` decides it's running as a CGI script if _all_ of the following
+`podrecast` decides that it is running as a CGI script if _all_ of the following
 four environment variables are set: `REQUEST_METHOD`, `HTTP_HOST`,
 `SCRIPT_NAME` and `PATH_INFO`.  Otherwise, it considers itself to be
 running normally.
+
+In general, there is no reason why multiple root directories cannot be
+defined.  However, when running as a CGI script, `podrecast` requires that
+the configuration file defines _exactly one_ such root.
 ****
 
 .Cron.
@@ -184,6 +200,25 @@ to see _all_ of the output.
 
 `podrecast` disables the `wget` progress bar when standard output
 is not attached to a terminal.
+****
+
+.Security.
+****
+Hmm.  +
+I only run `podrecast` on a private network, and -- although I know of no
+vulnerabilities -- I wouldn't
+particularly recommend running it on a public server.
+
+However, `podrecast` does do the following checks on incoming CGI requests:
+
+- The final path for a directory or file _must be inside the root
+  directory_. +
+  This may be an issue if you use symbolic links.
+- The path _may not_ contain the sequence "`..`". +
+  (Why on earth should it?)
+- The path _may not_ be more than 1000 characters long. +
+  (That's a lot of characters.  Anything longer is probably just someone
+  probing for vulnerabilities.)
 ****
 
 // vim: set syntax=asciidoc:

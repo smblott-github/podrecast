@@ -26,6 +26,7 @@ parser.add_option("-m", "--max",         type=int,            dest="max",       
 parser.add_option("-c", "--catchup",     action="store_true", dest="catchup",     default=False, help="mark all podcasts as read")
 parser.add_option("-a", "--autocatchup", action="store_true", dest="autocatchup", default=False, help="mark all podcasts in newly-encountered feeds as read; a feed is \"newly-encountered\" if either its directory or its feed file does not initially exist")
 parser.add_option("-r", "--roots",       action="store_true", dest="roots",       default=False, help="output only a list of configured root directories")
+parser.add_option("-f", "--files",       action="store_true", dest="files",       default=False, help="output only a list of files ready for post processing")
 
 (options, args) = parser.parse_args()
 
@@ -392,9 +393,35 @@ def show_roots():
          sys.exit(1)
 
 # ###########################################################################
+# Files ready for post processing...
+
+def show_files():
+   for root in read_roots(True):
+      if len(root) == 2:
+         walk_root(root)
+      else:
+         elog("error: invalid root: " + str(root))
+         sys.exit(1)
+
+def walk_root(path):
+   path = path[1]
+   try:
+      for root, dirs, files in os.walk(path):
+         for f in files:
+            if f.endswith(".podrecast_download"):
+               print os.path.join(root,f)
+   except:
+      elog("failed to traverse:", path)
+      sys.exit(1)
+
+# ###########################################################################
 # Main...
 
 if __name__ == "__main__":
+   #
+   if options.files:
+      show_files()
+      sys.exit(0)
    #
    if options.roots:
       show_roots()

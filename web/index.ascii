@@ -108,7 +108,7 @@ My own `crontab` reads like:
 ----
 
 (`chronic` is part of the https://joeyh.name/code/moreutils/[moreutils]
-package.  It simplifies crontabs and is well worth a look.)
+package.  It simplifies and improves crontabs, and is well worth a look.)
 ****
 
 .Command line arguments:
@@ -127,6 +127,8 @@ package.  It simplifies crontabs and is well worth a look.)
 `-r`::
    Just output the root directory.  Useful for post-processing scripts to
    find files for post processing.
+`-f`::
+   Just output a list of files which are ready for post processing.
 ****
 
 // vim: set syntax=asciidoc:

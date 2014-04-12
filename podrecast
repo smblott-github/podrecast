@@ -9,13 +9,15 @@ from tempfile import mkstemp
 from fcntl import flock, LOCK_EX, LOCK_NB
 from subprocess import call
 from optparse import OptionParser
+from copy import copy
 
 # ###########################################################################
 # Command-line arguments...
 
 parser = OptionParser()
-parser.add_option("-c", "--catchup", action="store_true", dest="catchup", default=False, help="mark all podcasts as read")
-parser.add_option("-r", "--roots",   action="store_true", dest="roots",   default=False, help="output a list of configured root directories")
+parser.add_option("-c", "--catchup",     action="store_true", dest="catchup",     default=False, help="mark all podcasts as read")
+parser.add_option("-a", "--autocatchup", action="store_true", dest="autocatchup", default=False, help="mark podcasts in newly-encountered feeds as read")
+parser.add_option("-r", "--roots",       action="store_true", dest="roots",       default=False, help="output a list of configured root directories")
 
 (options, args) = parser.parse_args()
 
@@ -180,7 +182,15 @@ def download_feed(directory,url,options):
    global errors
    cwd = os.getcwd()
    try:
+      existing_feed = os.path.isdir(directory)
       chdir(directory)
+      #
+      existing_feed = existing_feed or os.path.isfile(feed_file())
+      if options.autocatchup and not existing_feed:
+         # Auto catchup.
+         options = copy(options)
+         options.catchup = True
+      #
       wget(url,feed_file(), [ '-q' ])
       feed, enclosures = slurp_enclosures(feed_file())
    except:

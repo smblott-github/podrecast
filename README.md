@@ -21,4 +21,6 @@ them on a local network.
 
 That's what `PodRecast` does.
 
+## More information?
+
 See the [web page](http://podrecast.smblott.org/) for more details.

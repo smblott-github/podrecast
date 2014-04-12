@@ -281,7 +281,7 @@ def handle_cgi_file(path):
    #
    # TODO:
    # Look up the MIME type and calculate the content length.
-   stat = os.state(path)
+   stat = os.stat(path)
    print "Content-Type: audio/mpeg"
    print "Content-Length: ", stat.st_size
    print

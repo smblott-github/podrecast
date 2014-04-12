@@ -64,6 +64,10 @@ def fd_copy(src,dst):
       if not chunk: return
       os.write(dst,chunk)
 
+def slurp(fname):
+   with open(fname) as fd:
+      return fd.read()
+
 def chdir(directory):
    created = False
    if os.path.exists(directory) and not os.path.isdir(directory):
@@ -140,18 +144,6 @@ def read_config(config,locking=False):
    return lines
 
 # ###########################################################################
-# HTTP-GET...
-
-# Fetch a URL, return contents...
-#
-def fetch_url(url):
-   log("get:", url)
-   response = get(url)
-   if response.status_code != 200:
-      raise Exception("HTTP-get() failed [" + str(response.status_code) + "]: " + url)
-   return response.content
-
-# ###########################################################################
 # Handle feeds and enclosures...
 
 def download_feeds(config):
@@ -181,7 +173,8 @@ def download_feed(catchup,directory,url):
    cwd = os.getcwd()
    try:
       catchup = chdir(directory) or catchup
-      text = fetch_url(url)
+      wget(url,feed_file())
+      text = slurp(feed_file())
       feed = objectify.fromstring(text)
       enclosures = feed.findall('.//channel/item/enclosure')
    except:
@@ -196,21 +189,6 @@ def download_feed(catchup,directory,url):
       except Exception as error:
          elog("enclosure error:", str(error))
          errors += 1
-   #
-   tmp = None
-   try:
-      fd, tmp = mkstemp(dir=".", prefix=feed_file(), suffix=".podrecast.feed.tmp")
-      os.write(fd,etree.tostring(feed))
-      os.close(fd)
-      # TODO:
-      # Respect umask.
-      os.chmod(tmp,0644)
-      os.rename(tmp,feed_file())
-   except:
-      if tmp and os.path.exists(tmp):
-         os.unlink(tmp)
-      chdir(cwd)
-      raise
    #
    chdir(cwd)
 

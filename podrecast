@@ -212,9 +212,10 @@ def handle_enclosure(enclosure,options):
    fname = os.path.basename(url.path)
    #
    if os.path.exists(done_file(fname)):
-      # Touch the done_file().  That way, done_file()s which are older than the
-      # feed file itself no longer occur in the feed, and might safely be
-      # deleted.  This must, therefore, be the first of this sequence of steps.
+      # Touch the done_file().  That way, done_file()s which are more than a
+      # little older than the feed file itself no longer occur in the feed, and
+      # might safely be deleted.  This must, therefore, be the first of this
+      # sequence of steps.
       #
       touch(done_file(fname))
       # log("done:", fname)

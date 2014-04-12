@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# vim: ft=zsh
 
 local gain=6
 local suffix='.podrecast_download'
@@ -49,6 +50,25 @@ if (( $#roots == 0 ))
 then
    print "error: could not find any root directories" >&2
    exit 1
+fi
+
+# ###########################################################################
+# Customisation...
+#
+# If ~/.podrecast_mp3gain exists and is executable, then it is sourced
+# here.  This provides an opportunity for customisation, such as renaming
+# or moving files.
+#
+# Note: $roots is already set, here.  So it can be used by such
+# customisation scripts.  Indeed, it can even be changed.
+#
+
+local rc="$HOME/.podrecast_mp3gain"
+
+if [[ -f $rc && -s $rc && -x $rc ]]
+then
+   print "source: $rc"
+   source $rc
 fi
 
 # ###########################################################################

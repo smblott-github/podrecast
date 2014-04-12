@@ -187,7 +187,6 @@ def download_feed(directory,url,options):
       #
       existing_feed = existing_feed and os.path.isfile(feed_file())
       if options.autocatchup and not existing_feed:
-         # Auto catchup.
          options = copy(options)
          options.catchup = True
       #

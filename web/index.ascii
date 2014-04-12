@@ -191,8 +191,9 @@ the configuration file defines _exactly one_ such root.
 
 .Cron.
 ****
-`podrecast` is quite chatty on standard output.  This can be unhelpful when
-run incorrectly as a cron job.
+`podrecast` is quite chatty on standard output.
+This can be helpful when run interactively,
+but not when run (incorrectly) as a cron job.
 
 You can always redirect standard output to `/dev/null`.  But, really, the
 best approach is to use `chronic`.  That way, when an error occurs, you get

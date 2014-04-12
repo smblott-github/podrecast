@@ -8,12 +8,12 @@ PodRecast -- a podcast aggregator for post-processing then re-publishing podcast
 For me, two reasons:
 
 - Podcast loudness varies substantially across feeds.  Some can be too
-  load, some too quiet.  And I don't want to fiddle with the
+  loud, some too quiet.  And I don't want to fiddle with the
   volume for each new podcast.  Post-processing with
   [MP3Gain](http://mp3gain.sourceforge.net/) can balance the
   loudness of podcast files, making all podcasts sound equally loud.
 
-- In the EU, there a rules governing the maximum volume which consumer
+- In the EU, there are rules governing the maximum volume which consumer
   devices, such as smart phones, can generate through headphones.  In a noisy
   environment (for me, that's when cycling) the mandated volume can be too
   low, particularly for spoken podcasts.  Again,

@@ -8,11 +8,19 @@ from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
 from fcntl import flock, LOCK_EX, LOCK_NB
 from subprocess import call
+from optparse import OptionParser
+
+# ###########################################################################
+# Command-line arguments...
+
+parser = OptionParser()
+parser.add_option("-c", "--catchup", action="store_true", dest="catchup", default=False, help="mark all podcasts as read")
+
+(options, args) = parser.parse_args()
 
 # ###########################################################################
 # Globals and "constants", ...
 
-catchup = False
 errors = 0
 lock = None
 cgi = "PATH_INFO" in os.environ and "SCRIPT_NAME" in os.environ and "HTTP_HOST" in os.environ and "REQUEST_METHOD" in os.environ
@@ -148,7 +156,7 @@ def read_config(config,locking=False):
 # ###########################################################################
 # Handle feeds and enclosures...
 
-def download_feeds(config,catchup):
+def download_feeds(config,options):
    global errors
    for line in read_config(config,True):
       if line[0] == "root":
@@ -163,18 +171,18 @@ def download_feeds(config,catchup):
             if len(line) != 2:
                raise Exception("config: invalid feed: " + str(line))
             directory, url = line
-            download_feed(directory,url,catchup)
+            download_feed(directory,url,options)
          except (KeyboardInterrupt, SystemExit):
             raise
          except Exception as error:
             elog("feed error:", directory, url, str(error))
             errors += 1
 
-def download_feed(directory,url,catchup):
+def download_feed(directory,url,options):
    global errors
    cwd = os.getcwd()
    try:
-      catchup = chdir(directory) or catchup
+      catchup = chdir(directory) or options.catchup
       wget(url,feed_file(), [ '-q' ])
       feed, enclosures = slurp_enclosures(feed_file())
    except:
@@ -183,7 +191,7 @@ def download_feed(directory,url,catchup):
    #
    for enclosure in enclosures:
       try:
-         handle_enclosure(enclosure,catchup)
+         handle_enclosure(enclosure,options,catchup)
       except (KeyboardInterrupt, SystemExit):
          raise
       except Exception as error:
@@ -197,7 +205,7 @@ def slurp_enclosures(fname):
    feed = objectify.fromstring(text)
    return feed, feed.findall('.//channel/item/enclosure')
 
-def handle_enclosure(enclosure,catchup):
+def handle_enclosure(enclosure,options,catchup):
    attributes = enclosure.attrib
    if not "url" in attributes:
       raise Eception("enclosure, no url")
@@ -302,7 +310,7 @@ if __name__ == "__main__":
    if cgi:
       handle_cgi()
    else:
-      download_feeds(choose_config(),catchup)
+      download_feeds(choose_config(),options)
       if ( 0 < errors ):
          elog("errors:", str(errors))
          sys.exit(1)

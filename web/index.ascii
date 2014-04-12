@@ -123,7 +123,7 @@ package.  It simplifies and improves crontabs, and is well worth a look.)
    a newly-configured feed, it marks all content as downloaded, but does
    not actually download them. +
    The idea is that newly-configured feeds may contain tens or even hundreds of
-   podcasts, for more than you actually want to download.
+   podcasts, far more than most people actually want to download.
 `-r`::
    Just output the root directory.  Useful for post-processing scripts to
    find files for post processing.
@@ -167,7 +167,7 @@ find /MY/ROOT/DIRECTORY -type f -name '[^.]*' -mtime +20 -delete
 `podrecast` stores its state in hidden files in the podcast directory
 itself.  Whenever it downloads a feed, it touches all of the state files
 related to enclosures mentioned in the feed.  Therefore, state files with
-old modification times can be safely deleted.  Something like:
+old modification times can safely be deleted.  Something like:
 
 ----
 find /MY/ROOT/DIRECTORY -type f -name '.*.podrecast_done' -mtime +20 -delete
@@ -205,7 +205,7 @@ is not attached to a terminal.
 .Security.
 ****
 Hmm.  +
-I only run `podrecast` on a private network, and -- although I know of no
+I run `podrecast` on a private network, and -- although I know of no
 vulnerabilities -- I wouldn't
 particularly recommend running it on a public server.
 

@@ -7,6 +7,7 @@ import os, sys, urllib2
 from urlparse import urlparse, urlunparse
 from tempfile import mkstemp
 from fcntl import flock, LOCK_EX, LOCK_NB
+from subprocess import call
 
 # ###########################################################################
 # Globals and "constants", ...
@@ -63,28 +64,33 @@ def fd_copy(src,dst):
       if not chunk: return
       os.write(dst,chunk)
 
-# Create (if necessary) and chdir to directory.
-# Return True if directory was created, False otherwise.
-#
 def chdir(directory):
    created = False
-   try:
-      if os.path.exists(directory) and not os.path.isdir(directory):
-         raise Exception("exists, but is not a directory: " + directory)
-      if not os.path.isdir(directory):
-         log("creating:", directory)
-         created = True
-         os.makedirs(directory)
-      #
-      log("chdir:", directory)
-      os.chdir(directory)
+   if os.path.exists(directory) and not os.path.isdir(directory):
+      raise Exception("exists, but is not a directory: " + directory)
+   if not os.path.isdir(directory):
+      log("creating:", directory)
+      created = True
+      os.makedirs(directory)
    #
-   except OSError as error: 
-      if error.errno == os.errno.EEXIST and os.path.isdir(directory):
-         pass
-      else: raise
-   #
+   log("chdir:", directory)
+   os.chdir(directory)
    return created
+
+def wget(url,fname):
+   tmp = None
+   log("wget:", url)
+   try:
+      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
+      os.close(fd)
+      status = call([ 'wget', '-O', tmp, url])
+      os.chmod(tmp,0644)
+      os.rename(tmp,fname)
+      log("done:", fname)
+   except:
+      if tmp and os.path.exists(tmp):
+         os.unlink(tmp)
+      raise
 
 # ###########################################################################
 # Non-standard libraries...
@@ -144,40 +150,6 @@ def fetch_url(url):
    if response.status_code != 200:
       raise Exception("HTTP-get() failed [" + str(response.status_code) + "]: " + url)
    return response.content
-
-# Download a URL, save in file...
-#
-# This uses urllib2, instead of python-requests.  It would be nice to
-# use the latter.  However, the "stream=True"-option support across systems
-# seems to be unreliable.
-#
-# FIXME:
-#   Unlike python-requests (which is used for feeds), this does not use
-#   "~/.netrc" for authentication.
-#
-def http_download(url,fname):
-   log("download:", url)
-   tmp = None
-   try:
-      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
-      request = urllib2.urlopen(url)
-      while True:
-         chunk = request.read(4096)
-         if not chunk: break
-         os.write(fd,chunk)
-      #
-      os.close(fd)
-      request.close()
-      # TODO:
-      # Respect umask.
-      os.chmod(tmp,0644)
-      os.rename(tmp,fname)
-      log("done:", fname)
-      return tmp
-   except:
-      if tmp and os.path.exists(tmp):
-         os.unlink(tmp)
-      raise
 
 # ###########################################################################
 # Handle feeds and enclosures...
@@ -267,7 +239,7 @@ def handle_enclosure(catchup,enclosure):
       return
    #
    # OK.  Download the file.
-   http_download(urlunparse(url),download_file(fname))
+   wget(urlunparse(url),download_file(fname))
    touch(done_file(fname))
 
 # ###########################################################################

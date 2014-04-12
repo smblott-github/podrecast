@@ -15,6 +15,7 @@ from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option("-c", "--catchup", action="store_true", dest="catchup", default=False, help="mark all podcasts as read")
+parser.add_option("-r", "--roots",   action="store_true", dest="roots",   default=False, help="output a list of configured root directories")
 
 (options, args) = parser.parse_args()
 
@@ -125,11 +126,12 @@ except:
 # ###########################################################################
 # Configuration...
 
-def choose_config():
+def choose_config(quiet=False):
    for config in configs:
       config = os.path.expanduser(config)
       if os.path.isfile(config) and os.access(config, os.R_OK):
-         log("config:", config)
+         if not quiet:
+            log("config:", config)
          return config
    raise Exception("could failed to find config file: " + str(configs))
 
@@ -237,12 +239,12 @@ def handle_enclosure(enclosure,options,catchup):
 # Handle cgi requests...
 
 def handle_cgi():
-   lines = [ line for line in read_config(choose_config()) if line[0] == "root" ]
+   roots = [ line for line in read_config(choose_config()) if line[0] == "root" ]
    #
-   if len(lines) != 1 or len(lines[0]) != 2:
+   if len(roots) != 1 or len(roots[0]) != 2:
       elog("error: cannot serve CGI without a single, valid root")
       sys.exit(1)
-   root = lines[0][1]
+   root = roots[0][1]
    #
    # TODO:
    # os.environ['PATH_INFO'] and path are tainted!
@@ -304,16 +306,34 @@ def handle_cgi_file(path):
    sys.exit(0)
 
 # ###########################################################################
+# Root directories...
+
+def read_roots(quiet=False):
+   return [ line for line in read_config(choose_config(quiet)) if line[0] == "root" ]
+
+def show_roots():
+   for root in read_roots(True):
+      if len(root) == 2:
+         print root[1]
+      else:
+         elog("error: invalid root: " + str(root))
+         sys.exit(1)
+
+# ###########################################################################
 # Main...
 
 if __name__ == "__main__":
+   #
+   if options.roots:
+      show_roots()
+      sys.exit(0)
+   #
    if cgi:
       handle_cgi()
-   else:
-      download_feeds(choose_config(),options)
-      if ( 0 < errors ):
-         elog("errors:", str(errors))
-         sys.exit(1)
+      sys.exit(0)
    #
-   sys.exit(0)
+   download_feeds(choose_config(),options)
+   if ( 0 < errors ):
+      elog("errors:", str(errors))
+      sys.exit(1)
 

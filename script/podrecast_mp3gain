@@ -36,13 +36,7 @@ print "config: $config"
 # Find roots...
 
 local -a roots
-
-grep -v '^\s*#' $config    \
-   | sed -r 's/^\s*//'     \
-   | sed -r 's/\s{1,}/ /'  \
-   | sed -n '/root\>/ p'   \
-   | cut -d' ' -f 2        \
-   | read -A roots
+roots=( $(podrecast -r) )
 
 print "roots:" $roots
 

@@ -19,7 +19,7 @@ Both of these problems can be addressed by downloading podcasts to a server,
 post processing the files there (possibly with `mp3gain`), then republishing
 them on a local network.
 
-That's what `PodRecast` does.
+That's what PodRecast does.
 
 ## More information?
 

@@ -36,7 +36,7 @@ errors = 0
 lock = None
 cgi = "PATH_INFO" in os.environ and "SCRIPT_NAME" in os.environ and "HTTP_HOST" in os.environ and "REQUEST_METHOD" in os.environ
 
-## How should we handle the case where only some of these are set?
+## How should we handle the case where some but not all of these are set?
 ## if not cgi and ("PATH_INFO" in os.environ or "SCRIPT_NAME" in os.environ or "HTTP_HOST" in os.environ or "REQUEST_METHOD" in os.environ):
 ##    sys.stderr.write("error: insufficient environment variables for CGI\n")
 ##    sys.exit(1)
@@ -57,7 +57,6 @@ def feed_file():
 # "/etc/podrecast.conf" or "/usr/local/etc/podrecast.conf", because these are
 # the only two which are findable by all users, including the user account
 # under which the web server is running.
-#
 
 configs = [ 
             "./podrecast.conf",

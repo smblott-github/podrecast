@@ -15,7 +15,12 @@ from subprocess import call
 catchup = False
 errors = 0
 lock = None
-cgi = "PATH_INFO" in os.environ and "SCRIPT_NAME" in os.environ and  "HTTP_HOST" in os.environ
+cgi = "PATH_INFO" in os.environ and "SCRIPT_NAME" in os.environ and "HTTP_HOST" in os.environ and "REQUEST_METHOD" in os.environ
+
+## How should we habdle the case where some of these are set?
+## if not cgi and ("PATH_INFO" in os.environ or "SCRIPT_NAME" in os.environ or "HTTP_HOST" in os.environ or "REQUEST_METHOD" in os.environ):
+##    sys.stderr.write("error: insufficient environment variables for CGI\n")
+##    sys.exit(1)
 
 def done_file(fname):
    return "." + fname + ".done"

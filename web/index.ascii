@@ -1,6 +1,6 @@
 = PodRecast =
 Stephen Blott <smblott+prc@gmail.com>
-// :toc2:
+:toc2:
 
 _PodRecast_ (or _PRC_) is a podcast aggregator for post-processing then
 re-publishing podcasts.

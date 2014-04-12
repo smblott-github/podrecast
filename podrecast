@@ -106,7 +106,8 @@ def wget(url,fname,options=[]):
    try:
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
       os.close(fd)
-      status = call([ 'wget', '-O', tmp ] + options + extras + [ url ])
+      if call([ 'wget', '-O', tmp ] + options + extras + [ url ]) != 0:
+         raise Exception("wget/download failed: " + url)
       # TODO:
       # Respect umask.
       os.chmod(tmp,0644)

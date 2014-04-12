@@ -79,6 +79,13 @@ def elog(*args):
    if cgi: print "X-PODRECAST-ERROR:", " ".join(args)
    else:   sys.stderr.write(" ".join(args) + "\n")
 
+def cgi_error(*args):
+   for arg in args:
+      elog(arg)
+   print "Status: 404 Not Found"
+   print
+   sys.exit(0)
+
 def touch(fname):
    with file(fname, 'a'):
       os.utime(fname, None)
@@ -283,22 +290,19 @@ def handle_cgi():
    roots = [ line for line in read_config(choose_config()) if line[0] == "root" ]
    #
    if len(roots) != 1 or len(roots[0]) != 2:
-      elog("error: for CGI, there must be a single, valid root")
-      sys.exit(1)
+      cgi_error("for CGI, there must be a single, valid root")
    #
    root = roots[0][1]
    path = root + os.environ['PATH_INFO']
    if not path_has_prefix(path,root):
-      raise Exception("error: path leads outside of root")
+      cgi_error("PATH_INFO, invalid", path)
    #
    if os.path.isdir(path) and os.access(path, os.R_OK) and os.access(path, os.X_OK):
       return handle_cgi_directory(path)
    if os.path.isfile(path) and os.access(path, os.R_OK):
       return handle_cgi_file(path)
    #
-   elog("error: does not exist:", path)
-   sys.exit(1)
-   #
+   cgi_error("PATH_INFO, path not found", path)
 
 def path_has_prefix(path,prefix):
    path = os.path.realpath(path)
@@ -311,9 +315,10 @@ def path_has_prefix(path,prefix):
 def handle_cgi_directory(path):
    chdir(path)
    #
-   if not os.path.isfile(feed_file()) or not os.access(feed_file(), os.R_OK):
-      elog("error: cannot read feed file:", path + "/" + feed_file())
-      sys.exit(1)
+   if not os.path.isfile(feed_file()):
+      cgi_error("file does not exist", path)
+   if not os.access(feed_file(), os.R_OK):
+      cgi_error("file not readable", path)
    #
    feed, enclosures = slurp_enclosures(feed_file())
    for enclosure in enclosures:
@@ -324,7 +329,6 @@ def handle_cgi_directory(path):
          item = enclosure.getparent()
          item.getparent().remove(item)
          continue
-      # Content is ready...
       #
       http_host = os.environ['HTTP_HOST']
       script_name = os.environ['SCRIPT_NAME']
@@ -341,8 +345,8 @@ def handle_cgi_directory(path):
 
 def handle_cgi_file(path):
    #
-   # TODO:
-   # Look up the MIME type and calculate the content length.
+   # FIX:
+   # Look up the MIME type.
    stat = os.stat(path)
    print "Content-Type: audio/mpeg"
    print "Content-Length: ", stat.st_size

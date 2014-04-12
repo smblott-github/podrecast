@@ -73,7 +73,7 @@ def chdir(directory):
          raise Exception("exists, but is not a directory: " + directory)
       if not os.path.isdir(directory):
          log("creating:", directory)
-         created = False
+         created = True
          os.makedirs(directory)
       #
       log("chdir:", directory)

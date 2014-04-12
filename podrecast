@@ -25,13 +25,13 @@ errors = 0
 lock = None
 cgi = "PATH_INFO" in os.environ and "SCRIPT_NAME" in os.environ and "HTTP_HOST" in os.environ and "REQUEST_METHOD" in os.environ
 
-## How should we habdle the case where some of these are set?
+## How should we handle the case where only some of these are set?
 ## if not cgi and ("PATH_INFO" in os.environ or "SCRIPT_NAME" in os.environ or "HTTP_HOST" in os.environ or "REQUEST_METHOD" in os.environ):
 ##    sys.stderr.write("error: insufficient environment variables for CGI\n")
 ##    sys.exit(1)
 
 def done_file(fname):
-   return "." + fname + ".done"
+   return "." + fname + ".podrecast_done"
 
 def download_file(fname):
    return fname + ".podrecast_download"

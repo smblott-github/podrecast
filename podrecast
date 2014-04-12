@@ -14,10 +14,18 @@ from copy import copy
 # ###########################################################################
 # Command-line arguments...
 
-parser = OptionParser()
+help_text ='''
+Normally, podrecast downloads new podcast files in acordance with its
+configuration and arguments.  However, if the following four CGI environment
+variables are all defined, then it behaves instead as a CGI script:
+REQUEST_METHOD, HTTP_HOST, SCRIPT_NAME and PATH_INFO.
+'''
+
+parser = OptionParser(epilog=help_text[1:])
+parser.add_option("-m", "--max",         type=int, dest="max",     default=0, help="the maximum number of podcasts to download from each feed (default: 0, meaning download all new podcasts)")
 parser.add_option("-c", "--catchup",     action="store_true", dest="catchup",     default=False, help="mark all podcasts as read")
-parser.add_option("-a", "--autocatchup", action="store_true", dest="autocatchup", default=False, help="mark podcasts in newly-encountered feeds as read")
-parser.add_option("-r", "--roots",       action="store_true", dest="roots",       default=False, help="output a list of configured root directories")
+parser.add_option("-a", "--autocatchup", action="store_true", dest="autocatchup", default=False, help="mark all podcasts in newly-encountered feeds as read; a feed is \"newly-encountered\" if either its directory or its feed file does not initially exist")
+parser.add_option("-r", "--roots",       action="store_true", dest="roots",       default=False, help="output only a list of configured root directories")
 
 (options, args) = parser.parse_args()
 
@@ -196,7 +204,25 @@ def download_feed(directory,url,options):
       chdir(cwd)
       raise
    #
-   for enclosure in enclosures:
+   if 0 < options.max:
+      handle_enclosures = enclosures[:options.max]
+      catchup_enclosures = enclosures[options.max:]
+   else:
+      handle_enclosures = enclosures
+      catchup_enclosures = []
+   #
+   for enclosure in handle_enclosures:
+      try:
+         handle_enclosure(enclosure,options)
+      except (KeyboardInterrupt, SystemExit):
+         raise
+      except Exception as error:
+         elog("enclosure error:", str(error))
+         errors += 1
+   #
+   options = copy(options)
+   options.catchup = True
+   for enclosure in catchup_enclosures:
       try:
          handle_enclosure(enclosure,options)
       except (KeyboardInterrupt, SystemExit):

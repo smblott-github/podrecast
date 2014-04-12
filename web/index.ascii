@@ -161,7 +161,7 @@ old modification times can (probably) be safely deleted.  Something like:
 
 - `find /MY/ROOT/DIRECTORY -type f -name '.*.podrecast_done' -mtime +20 -delete`
 
-However, there are usually not so many of these files and they take up next
+However, there are usually not so many state files and they take up next
 to no space, so I just let them be.
 ****
 

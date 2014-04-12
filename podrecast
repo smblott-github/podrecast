@@ -58,15 +58,16 @@ def touch(fname):
    with file(fname, 'a'):
       os.utime(fname, None)
 
-def fd_copy(src,dst):
-   while True:
-      chunk = os.read(src,4096)
-      if not chunk: return
-      os.write(dst,chunk)
-
 def slurp(fname):
    with open(fname) as fd:
       return fd.read()
+
+def fd_copy(src,dst):
+   sz = 4 * 4096
+   while True:
+      chunk = os.read(src,sz)
+      if not chunk: return
+      os.write(dst,chunk)
 
 def chdir(directory):
    created = False
@@ -83,12 +84,14 @@ def chdir(directory):
 
 def wget(url,fname,options=[]):
    tmp = None
-   extra = [] if sys.stdout.isatty() else [ '-q' ]
+   extras = [] if sys.stdout.isatty() else [ '-q' ]
    log("wget:", url)
    try:
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
       os.close(fd)
-      status = call([ 'wget', '-O', tmp ] + options + extra + [ url ])
+      status = call([ 'wget', '-O', tmp ] + options + extras + [ url ])
+      # TODO:
+      # Respect umask.
       os.chmod(tmp,0644)
       os.rename(tmp,fname)
       log("done:", fname)
@@ -99,12 +102,6 @@ def wget(url,fname,options=[]):
 
 # ###########################################################################
 # Non-standard libraries...
-
-try:
-   from requests import get
-except:
-   elog("import error: package/module python-requests not found")
-   sys.exit(1)
 
 try:
    from lxml import objectify, etree
@@ -125,18 +122,17 @@ def choose_config():
 
 def read_config(config,locking=False):
    global lock
-   try:
-      lock = fd = open(config)
-      lines = fd.readlines()
-      if locking:
-         try:
-            flock(lock.fileno(), LOCK_EX | LOCK_NB)
-         except: raise Exception("locking, would block")
-      else:
-         lock = None
-         fd.close()
-   except Exception as error:
-      raise Exception("config: failed to read: " + config + "; " + str(error))
+   #
+   lock = fd = open(config)
+   lines = fd.readlines()
+   #
+   if locking:
+      try:
+         flock(lock.fileno(), LOCK_EX | LOCK_NB)
+      except: raise Exception("locking, would block: " + config)
+   else:
+      lock = None
+      fd.close()
    #
    lines = [ line.strip() for line in lines ]
    lines = [ line for line in lines if len(line) ]
@@ -147,7 +143,7 @@ def read_config(config,locking=False):
 # ###########################################################################
 # Handle feeds and enclosures...
 
-def download_feeds(config):
+def download_feeds(config,catchup):
    global errors
    for line in read_config(config,True):
       if line[0] == "root":
@@ -162,29 +158,27 @@ def download_feeds(config):
             if len(line) != 2:
                raise Exception("config: invalid feed: " + str(line))
             directory, url = line
-            download_feed(catchup,directory,url)
+            download_feed(directory,url,catchup)
          except (KeyboardInterrupt, SystemExit):
             raise
          except Exception as error:
             elog("feed error:", directory, url, str(error))
             errors += 1
 
-def download_feed(catchup,directory,url):
+def download_feed(directory,url,catchup):
    global errors
    cwd = os.getcwd()
    try:
       catchup = chdir(directory) or catchup
-      wget(url,feed_file(),['-q'])
-      text = slurp(feed_file())
-      feed = objectify.fromstring(text)
-      enclosures = feed.findall('.//channel/item/enclosure')
+      wget(url,feed_file(), [ '-q' ])
+      feed, enclosures = slurp_enclosures(feed_file())
    except:
       chdir(cwd)
       raise
    #
    for enclosure in enclosures:
       try:
-         handle_enclosure(catchup,enclosure)
+         handle_enclosure(enclosure,catchup)
       except (KeyboardInterrupt, SystemExit):
          raise
       except Exception as error:
@@ -193,10 +187,15 @@ def download_feed(catchup,directory,url):
    #
    chdir(cwd)
 
-def handle_enclosure(catchup,enclosure):
+def slurp_enclosures(fname):
+   text = slurp(fname)
+   feed = objectify.fromstring(text)
+   return feed, feed.findall('.//channel/item/enclosure')
+
+def handle_enclosure(enclosure,catchup):
    attributes = enclosure.attrib
    if not "url" in attributes:
-      raise Eception("enclosure without url")
+      raise Eception("enclosure, no url")
    #
    url = urlparse(attributes["url"])
    fname = os.path.basename(url.path)
@@ -225,15 +224,15 @@ def handle_enclosure(catchup,enclosure):
 # Handle cgi requests...
 
 def handle_cgi():
-   lines = [ line for line in read_config(choose_config()) if len(line) and line[0] == "root" ]
+   lines = [ line for line in read_config(choose_config()) if line[0] == "root" ]
    #
    if len(lines) != 1 or len(lines[0]) != 2:
-      elog("error: cannot serve CGI without a single root")
+      elog("error: cannot serve CGI without a single, valid root")
       sys.exit(1)
+   root = lines[0][1]
    #
    # TODO:
-   # path is not secure!
-   root = lines[0][1]
+   # os.environ['PATH_INFO'] and path are tainted!
    path = root + os.environ['PATH_INFO']
    if os.path.isdir(path) and os.access(path, os.R_OK) and os.access(path, os.X_OK):
       return handle_cgi_directory(path)
@@ -254,24 +253,21 @@ def handle_cgi_directory(path):
       elog("error: cannot read feed file:", path + "/" + feed_file())
       sys.exit(1)
    #
-   with open(feed_file()) as fd:
-      text = fd.read()
-   feed = objectify.fromstring(text)
-   #
-   for enclosure in feed.findall('.//channel/item/enclosure'):
+   feed, enclosures = slurp_enclosures(feed_file())
+   for enclosure in enclosures:
       attributes = enclosure.attrib
       url = urlparse(attributes["url"])
       fname = os.path.basename(url.path)
       if not os.path.isfile(fname) or not os.access(fname, os.R_OK):
          item = enclosure.getparent()
          item.getparent().remove(item)
-      else:
-         # Content is available...
-         #
-         host = os.environ['HTTP_HOST']
-         scriptname = os.environ['SCRIPT_NAME']
-         pathinfo = os.environ['PATH_INFO']
-         attributes["url"] = "http://" + host + scriptname + pathinfo + "/" + fname
+         continue
+      # Content is ready...
+      #
+      host = os.environ['HTTP_HOST']
+      scriptname = os.environ['SCRIPT_NAME']
+      pathinfo = os.environ['PATH_INFO']
+      attributes["url"] = "http://" + host + scriptname + pathinfo + "/" + fname
    #
    print "Content-Type: text/xml"
    print
@@ -282,13 +278,13 @@ def handle_cgi_directory(path):
 # Handle cgi requests for files...
 
 def handle_cgi_file(path):
-   # Perhaps look up the MIME type?
    #
+   # TODO:
+   # Look up the MIME type and calculate the content length.
+   stat = os.state(path)
    print "Content-Type: audio/mpeg"
+   print "Content-Length: ", stat.st_size
    print
-   # Flush standard output.  We are about to start using its file
-   # descriptor directly.
-   #
    sys.stdout.flush()
    fd = os.open(path, os.O_RDONLY)
    fd_copy(fd,sys.stdout.fileno())
@@ -301,7 +297,7 @@ if __name__ == "__main__":
    if cgi:
       handle_cgi()
    else:
-      download_feeds(choose_config())
+      download_feeds(choose_config(),catchup)
       if ( 0 < errors ):
          elog("errors:", str(errors))
          sys.exit(1)

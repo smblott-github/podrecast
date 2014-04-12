@@ -5,11 +5,15 @@
 
 import os, sys
 from tempfile   import mkstemp
-from urlparse   import urlparse, urlunparse
 from fcntl      import flock, LOCK_EX, LOCK_NB
 from subprocess import call, Popen, PIPE
 from optparse   import OptionParser
 from copy       import copy
+
+try:
+   from urllib.parse import urlparse, urlunparse
+except:
+   from urlparse import urlparse, urlunparse
 
 # ###########################################################################
 # Command-line arguments...
@@ -39,7 +43,7 @@ cgi = "PATH_INFO" in os.environ and "SCRIPT_NAME" in os.environ and "HTTP_HOST" 
 
 # Get current umask.
 #
-umask = os.umask(022)
+umask = os.umask(0o022)
 os.umask(umask)
 
 ## What if some but not all of these are set?
@@ -73,18 +77,18 @@ configs = [ "./podrecast.conf",
 # Utilities...
 
 def log(*args):
-   if cgi: print "X-PODRECAST-LOG:", " ".join(args)
-   else:   print " ".join(args)
+   if cgi: print("X-PODRECAST-LOG:", " ".join(args))
+   else:   print(" ".join(args))
 
 def elog(*args):
-   if cgi: print "X-PODRECAST-ERROR:", " ".join(args)
+   if cgi: print("X-PODRECAST-ERROR:", " ".join(args))
    else:   sys.stderr.write(" ".join(args) + "\n")
 
 def cgi_error(*args):
    for arg in args:
       elog(arg)
-   print "Status: 404 Not Found"
-   print
+   print("Status: 404 Not Found")
+   print()
    sys.exit(0)
 
 def touch(fname):
@@ -124,7 +128,7 @@ def wget(url,fname,options=[]):
       os.close(fd)
       if call([ 'wget', '-O', tmp ] + options + extras + [ url ]):
          raise Exception("wget/download failed: " + url)
-      os.chmod(tmp,0644&~umask)
+      os.chmod(tmp,0o644&~umask)
       os.rename(tmp,fname)
       log("done:", fname)
    except:
@@ -369,9 +373,9 @@ def handle_cgi_directory(path):
    #
    mime = 'text/xml'
    encoding = mime_encoding(feed_file(), "utf-8");
-   print 'Content-Type:', mime
-   print
-   print etree.tostring(feed, pretty_print=True, xml_declaration=True, encoding=encoding)
+   print('Content-Type:', mime)
+   print()
+   print(etree.tostring(feed, pretty_print=True, xml_declaration=True, encoding=encoding))
 
 # ###########################################################################
 # Handle cgi requests for files...
@@ -379,9 +383,9 @@ def handle_cgi_directory(path):
 def handle_cgi_file(path):
    mime = mime_type(path, 'audio/mpeg')
    stat = os.stat(path)
-   print 'Content-Type:', mime
-   print 'Content-Length:', stat.st_size
-   print
+   print('Content-Type:', mime)
+   print('Content-Length:', stat.st_size)
+   print()
    sys.stdout.flush()
    fd = os.open(path, os.O_RDONLY)
    fd_copy(fd,sys.stdout.fileno())
@@ -395,7 +399,7 @@ def read_roots(quiet=False):
 def show_roots():
    for root in read_roots(True):
       if len(root) == 2:
-         print root[1]
+         print(root[1])
       else:
          elog("error: invalid root: " + str(root))
          sys.exit(1)
@@ -417,7 +421,7 @@ def walk_root(path):
       for root, dirs, files in os.walk(path):
          for f in files:
             if f.endswith(".podrecast_download"):
-               print os.path.join(root,f)
+               print(os.path.join(root,f))
    except:
       elog("failed to traverse:", path)
       sys.exit(1)

@@ -337,7 +337,7 @@ def handle_cgi_directory(path):
    #
    print "Content-Type: text/xml"
    print
-   print etree.tostring(feed)
+   print etree.tostring(feed,pretty_print=True, xml_declaration=True)
    sys.exit(0)
 
 # ###########################################################################

@@ -84,17 +84,14 @@ def fd_copy(src,dst):
       os.write(dst,chunk)
 
 def chdir(directory):
-   created = False
    if os.path.exists(directory) and not os.path.isdir(directory):
       raise Exception("exists, but is not a directory: " + directory)
    if not os.path.isdir(directory):
       log("creating:", directory)
-      created = True
       os.makedirs(directory)
    #
    log("chdir:", directory)
    os.chdir(directory)
-   return created
 
 def wget(url,fname,options=[]):
    tmp = None
@@ -184,7 +181,7 @@ def download_feed(directory,url,options):
    global errors
    cwd = os.getcwd()
    try:
-      catchup = chdir(directory) or options.catchup
+      chdir(directory)
       wget(url,feed_file(), [ '-q' ])
       feed, enclosures = slurp_enclosures(feed_file())
    except:
@@ -193,7 +190,7 @@ def download_feed(directory,url,options):
    #
    for enclosure in enclosures:
       try:
-         handle_enclosure(enclosure,options,catchup)
+         handle_enclosure(enclosure,options)
       except (KeyboardInterrupt, SystemExit):
          raise
       except Exception as error:
@@ -207,7 +204,7 @@ def slurp_enclosures(fname):
    feed = objectify.fromstring(text)
    return feed, feed.findall('.//channel/item/enclosure')
 
-def handle_enclosure(enclosure,options,catchup):
+def handle_enclosure(enclosure,options):
    attributes = enclosure.attrib
    if not "url" in attributes:
       raise Eception("enclosure, no url")
@@ -227,7 +224,7 @@ def handle_enclosure(enclosure,options,catchup):
       # log("done:", fname)
       return
    #
-   if catchup:
+   if options.catchup:
       touch(done_file(fname))
       return
    #

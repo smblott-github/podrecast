@@ -58,12 +58,10 @@ def feed_file():
 # the only two which are findable by all users, including the user account
 # under which the web server is running.
 
-configs = [ 
-            "./podrecast.conf",
+configs = [ "./podrecast.conf",
             "~/.podrecast.conf",
             "/usr/local/etc/podrecast.conf",
-            "/etc/podrecast.conf"
-            ]
+            "/etc/podrecast.conf" ]
 
 # ###########################################################################
 # Utilities...

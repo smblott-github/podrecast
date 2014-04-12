@@ -131,4 +131,59 @@ package.  It simplifies and improves crontabs, and is well worth a look.)
    Just output a list of files which are ready for post processing.
 ****
 
+// /////////////////////////////////////////////////////
+== Final Comments ==
+
+.Locking.
+****
+`podrecast` locks (with `flock`) its configuration file to prevent two instances running
+at the same time (although that probably wouldn't be too much of a problem,
+see below...)
+****
+
+.File names.
+****
+`podrecast` handles all downloads via temporary files.  Therefore, you
+should not encounter partial downloads with normal-looking file names.
+****
+
+.Removing files.
+****
+`podrecast` _does not_ delete downloaded files.  Just use cron and
+`find` for that:
+
+- `find /MY/ROOT/DIRECTORY -type f -name '[^\.]*' -mtime +20 -delete`
+
+`podrecast` stores its state in hidden files in the podcast directory
+itself.  Whenever it downloads a feed, it touches all of the state files
+related to enclosures mentioned in the feed.  Therefore, state files with
+old modification times can (probably) be safely deleted.  Something like:
+
+- `find /MY/ROOT/DIRECTORY -type f -name '.*.podrecast_done' -mtime +20 -delete`
+
+However, there are usually not so many of these files and they take up next
+to no space, so I just let them be.
+****
+
+.CGI.
+****
+`podrecast` decides it's running as a CGI script if _all_ of the following
+four environment variables are set: `REQUEST_METHOD`, `HTTP_HOST`,
+`SCRIPT_NAME` and `PATH_INFO`.  Otherwise, it considers itself to be
+running normally.
+****
+
+.Cron.
+****
+`podrecast` is quite chatty on standard output.  This can be unhelpful when
+run incorrectly as a cron job.
+
+You can always redirect standard output to `/dev/null`.  But, really, the
+best approach is to use `chronic`.  That way, when an error occurs, you get
+to see _all_ of the output.
+
+`podrecast` disables the `wget` progress bar when standard output
+is not attached to a terminal.
+****
+
 // vim: set syntax=asciidoc:

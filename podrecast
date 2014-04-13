@@ -87,6 +87,7 @@ def feed_file():
 # If using the CGI functionality of podrecast, then it makes sense to use
 # "/etc/podrecast.conf" or "/usr/local/etc/podrecast.conf", because
 # the web server will only be able to find system-wide configuration files.
+# However, the other two might also be useful for testing.
 
 configs = [ "./podrecast.conf",
             "~/.podrecast.conf",
@@ -146,7 +147,7 @@ def wget(url,fname,options=[]):
    try:
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
       os.close(fd)
-      if call([ 'wget', '-O', tmp ] + options + extras + [ url ]):
+      if 0 != call([ 'wget', '-O', tmp ] + options + extras + [ url ]):
          raise Exception("wget/download failed: " + url)
       os.chmod(tmp,0644&~umask)
       os.rename(tmp,fname)
@@ -196,7 +197,7 @@ def choose_config(quiet=False):
       if os.path.isfile(config) and os.access(config, os.R_OK):
          if not quiet: log("config:", config)
          return config
-   raise Exception("could failed to find config file: " + str(configs))
+   raise Exception("failed to find config file: " + str(configs))
 
 def read_config(config,locking=False):
    global lock
@@ -217,9 +218,11 @@ def read_config(config,locking=False):
    lines = [ line for line in lines if len(line) ]
    lines = [ line for line in lines if not line.startswith("#") ]
    lines = [ line.split() for line in lines ]
+   #
    for line in lines:
       if len(line) != 2:
          raise Exception("config error: invalid line in {}: {}".format(config," ".join(line)))
+   #
    return lines
 
 def read_roots(quiet=False):
@@ -401,9 +404,10 @@ def handle_cgi_directory(path):
    #
    mime = 'text/xml'
    encoding = mime_encoding(feed_file(), "utf-8");
+   content = etree.tostring(feed, pretty_print=True, xml_declaration=True, encoding=encoding)
    print 'Content-Type:', mime
    print
-   print etree.tostring(feed, pretty_print=True, xml_declaration=True, encoding=encoding)
+   print content
 
 # ###########################################################################
 # Handle cgi requests for files...

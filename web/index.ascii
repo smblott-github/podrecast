@@ -8,11 +8,11 @@ re-publishing podcasts.
 // /////////////////////////////////////////////////////
 == Download/Installation ==
 
-.Currently:
 ****
-- You need to clone the https://github.com/smblott-github/podrecast[git
-  repository], and install from there. +
-  There are instructions link:#how[below].
+You need to clone the https://github.com/smblott-github/podrecast[git
+repository], and install from there.
+
+There are further instructions link:#how[below].
 ****
 
 // /////////////////////////////////////////////////////
@@ -73,44 +73,48 @@ All of this can be driven by link:#cron[cron].
 [[how]]
 == How? ==
 
-=== Clone the Repository
+=== Install
 
 ****
-All installation has to be done manually, for now:
-
 [source, sh]
+.Clone the git repository:
 ----
 git clone https://github.com/smblott-github/podrecast.git
+cd podrecast
 ----
-
-_Do not_ use the `Makefile` in the repository blindly, it might not do what
-you want.
-****
-
-=== Install the Executable
-
-****
-Install `podrecast` in some suitable location, possibly `/usr/local/bin`:
 
 [source, sh]
+.Install:
 ----
-install -v -m 0555 podrecast /usr/local/bin/
+sudo make install
+# or
+sudo python setup.py
 ----
+
+[IMPORTANT]
+====
+The setup script tries to install the `podrecast` CGI script.  However, it
+may not be able to locate your CGI directory, or it may choose the wrong
+directory.
+
+Observe the last few lines of the output of the setup script, above.  It will inform you whether and
+where the CGI script was installed.
+====
 ****
 
 === Configuration
 
 ****
-Create a configuration file, either in `/usr/local/etc/podrecast.conf` or in `/etc/podrecast.conf`.
+Create a configuration file:
 
-Here is an example. +
-A https://github.com/smblott-github/podrecast/tree/master/sample[commented
-version] of this sample is included in the `sample` directory in the git
-repository.
+- `/usr/local/etc/podrecast.conf`
 
-.`/etc/podrecast.conf`:
+Here is an example...
+
 [source, changelog]
 ----
+# /usr/local/etc/podrecast.conf
+
 root /home/blott/tmp/podrecast
 
 Cycling/Velo-Cast        http://velocastcc.squarespace.com/race-radio/rss.xml
@@ -122,8 +126,17 @@ Economics/Freakonomics   http://feeds.feedburner.com/freakonomicsradio?format=xm
 The root is the directory under which feeds and podcasts will be stored.
 This must come first.
 
-The feed lines each name first a subdirectory for the feed and then the
-feed's URL.  Feeds cannot share subdirectories.
+The following feed lines each consist of exactly two tokens:
+
+- the feed's subdirectory
+- the feed's URL
+
+A https://github.com/smblott-github/podrecast/tree/master/sample[commented
+version] of this sample is installed by the setup script in
+
+- `/usr/local/etc/podrecast.conf.sample`
+
+Feeds _must not_ share subdirectories.
 
 This configuration file needs to be in a system-wide location so that
 `podrecast` can find it when running as a CGI script.
@@ -139,7 +152,7 @@ podrecast        # download all available podcasts
 # or
 podrecast -c     # catch up
 # or
-podrecast -a     # automatically catch up, only on newly-added feeds
+podrecast -a     # automatically catch up (only catch up on newly-added feeds)
 # or
 podrecast -m 2   # download at most 2 podcasts from each feed
 ----
@@ -152,9 +165,9 @@ podrecast -m 2   # download at most 2 podcasts from each feed
 When podcasts are downloaded, they are not immediately available for
 delivery.  First, they must be post processed.
 
-Here is an example.
+Here is an example. +
 A https://github.com/smblott-github/podrecast/blob/master/script/podrecast_mp3gain[longer
-version] of this script is in the `script` directory of the git repository.
+version] of this script is installed by the setup script.
 
 [source, sh]
 .podrecast_mp3gain:
@@ -181,24 +194,27 @@ as:
 
 podrecast --ready `podrecast --downloaded`
 ----
+This too is installed by the setup script.
 ****
 
 === Republish
 
 ****
-Install `podrecast` in the CGI directory of your web server.  For me,
-that's `/usr/lib/cgi-bin/`:
+To republish content, `podrecast` must be installed as a CGI script.
+
+If the setup script failed to locate your CGI directory, then you will have to install the script by hand. +
+Something like...
 
 [source, sh]
 ----
-install -v -m 0555 podrecast /usr/lib/cgi-bin/
+install -v -m 0555 podrecast YOUR_CGI_DIRECTORY
 ----
 
-The URL for your republished feed is:
+The URLs for your republished feeds are of the form:
 
-- `http://SERVER/CGI-BIN/podrecast/SUBDIRECTORY`
+- `http://SERVER/CGI-BIN/podrecast/FEEDDIRECTORY`
 
-For example, with the sample configuration file above, it might be:
+For example, with the sample configuration file above, they might be:
 
 - `http://192.168.3.3/cgi-bin/podrecast/Cycling/Velo-Cast` +
   `http://192.168.3.3/cgi-bin/podrecast/BBC/More-Or-Less` +
@@ -209,10 +225,10 @@ For example, with the sample configuration file above, it might be:
 === Feed Links
 
 ****
-_PodRecast_ also publishes a simple HTML page with links to its feeds.
+_PodRecast_ also publishes a simple HTML page listing the links for its feeds.
 
-This can be useful for entering the links on mobile devices: point your
-device towards the feed link (below) and either click or select the feeds
+This can be useful for testing or for entering the links on mobile devices: point your
+device towards the feeds link and either click or copy the feeds
 you're interested in.
 
 The URL for the feed list is:
@@ -241,7 +257,7 @@ My own `crontab` reads like:
 ----
 
 (`chronic` is part of the https://joeyh.name/code/moreutils/[moreutils]
-package.  There's an explanation of the what and why or `chronic`
+package.  There's an explanation of the what and why of `chronic`
 http://www.ubuntujourneyman.com/2011/07/02/chronic-and-cron/[here].)
 
 If you don't want to use `chronic`, then this should do the trick:

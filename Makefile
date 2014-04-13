@@ -5,12 +5,12 @@
 #
 cgi = /usr/lib/cgi-bin
 
+build:
+	python setup.py build
+
 install:
 	$(MAKE) build
 	sudo CGI_DIR=$(cgi) python setup.py install
-
-build:
-	python setup.py build
 
 dist:
 	python setup.py sdist

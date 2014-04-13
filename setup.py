@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os
+import sys,os
 from distutils.core import setup
 
 cgi  = []
@@ -25,16 +25,17 @@ setup(name='podrecast',
       data_files=[ ( '/usr/local/etc', [ 'sample/podrecast.conf.sample' ] ), ] + cgi,
       )
 
-print
-if cgi:
-   directory, [ scriptname ] = cgi[0]
-   script = "{}/{}".format(directory,scriptname)
-   print 'changing mode of {} to 0555'.format(script)
-   os.chmod(script,0o555)
-   print "CGI script successfully installed in", script
-   print "please verify that this is the correct CGI directory"
-else:
-   print "WARNING: Everything installed *except* for the cgi script."
-   print "         Could not find the CGI directory."
-   print "         Please install it (podrecast) manually."
+if 'install' in sys.argv:
+   print
+   if cgi:
+      directory, [ scriptname ] = cgi[0]
+      script = "{}/{}".format(directory,scriptname)
+      print 'changing mode of {} to 0555'.format(script)
+      os.chmod(script,0o555)
+      print "CGI script successfully installed in", script
+      print "please verify that this is the correct CGI directory"
+   else:
+      print "WARNING: Everything installed *except* for the cgi script."
+      print "         Could not find the CGI directory."
+      print "         Please install it (podrecast) manually."
 

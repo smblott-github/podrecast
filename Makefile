@@ -1,11 +1,8 @@
 
 default:
-	@echo No default, read Makefile.
+	@echo No default. Read the Makefile.
 
-install:
-	python setup.py install
-
-test:
+run:
 	python ./podrecast
 
 cgi:
@@ -14,12 +11,14 @@ cgi:
 index:
 	REQUEST_METHOD=GET PATH_INFO=/ HTTP_HOST=localhost SCRIPT_NAME=/cgi-bin/podrecast python ./podrecast
 
-cgierror:
-	REQUEST_METHOD=GET PATH_INFO=/Cycling/Velo-Cast/../../../../../x HTTP_HOST=localhost SCRIPT_NAME=/cgi-bin/podrecast python ./podrecast
-	REQUEST_METHOD=GET PATH_INFO=/Cycling/Velo-CastXX HTTP_HOST=localhost SCRIPT_NAME=/cgi-bin/podrecast python ./podrecast
+install:
+	python setup.py install
 
-sdist:
+build:
+	python setup.py build
+
+dist:
 	python setup.py sdist
 
-.PHONY: default test cgi index cgierror install sdist
+.PHONY: default run cgi index install build dist
  

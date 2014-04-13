@@ -2,15 +2,14 @@
 Stephen Blott <smblott+prc@gmail.com>
 :toc2:
 
+****
 _PodRecast_ is a podcast aggregator for post-processing then
 re-publishing podcasts.
-
-// /////////////////////////////////////////////////////
-== Download/Installation ==
-
-.See:
 ****
-- link:#how[Here].
+
+.Quick links:
+****
+- link:#how[Installation].
 ****
 
 // /////////////////////////////////////////////////////
@@ -94,7 +93,7 @@ sudo make cgi=/usr/lib/cgi-bin install
 [IMPORTANT]
 ====
 The setup script tries to install the `podrecast` CGI script.  However, it
-will not create the CGI directory.
+will not create the CGI directory, and may therefore fail.
 
 Observe the last few lines of the output of the setup script, above.  It
 will inform you whether and where the CGI script was installed.
@@ -131,7 +130,7 @@ The following feed lines each consist of exactly two tokens:
 - the feed's URL
 
 A https://github.com/smblott-github/podrecast/tree/master/sample[commented
-version] of this sample is installed by the setup script in
+version] of this sample is installed by the setup script in:
 
 - `/usr/local/etc/podrecast.conf.sample`
 
@@ -193,7 +192,7 @@ as:
 
 podrecast --ready `podrecast --downloaded`
 ----
-This too is installed by the setup script.
+This script is also installed by the setup script.
 ****
 
 === Republish
@@ -347,7 +346,7 @@ find /MY/ROOT/DIRECTORY -type f -name '.*.podrecast_done' -mtime +20 -delete
 ----
 
 However, there are usually not so many state files, and they take up next
-to no space, so I just let them be.
+to no space; so I just let them be.
 ****
 
 .CGI.

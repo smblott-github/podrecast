@@ -1,6 +1,6 @@
 = PodRecast =
 Stephen Blott <smblott+prc@gmail.com>
-// :toc2:
+:toc2:
 
 _PodRecast_ (or _PRC_) is a podcast aggregator for post-processing then
 re-publishing podcasts.
@@ -11,7 +11,8 @@ re-publishing podcasts.
 .Currently:
 ****
 - you need to clone the https://github.com/smblott-github/podrecast[git
-  repository], and install from there.
+  repository], and install from there. +
+  There are instructions below.
 ****
 
 // /////////////////////////////////////////////////////
@@ -69,66 +70,157 @@ embedded in the feed.
 // /////////////////////////////////////////////////////
 == How? ==
 
-.Installation and configuration.
+=== Install the Executable
+
 ****
-. Install `podrecast` in some suitable location, possibly `/usr/local/bin`.
+Install `podrecast` in some suitable location, possibly `/usr/local/bin`:
 
-. There's a sample configuration file in the `sample` directory.
-  This should go, most likely, in `/etc/podrecast.conf`. +
-  (The configuration file needs to be in a system-wide location so that `podrecast` can find it when running as a CGI script.)
-
-. Install `podrecast` (also) as a CGI script in some suitable location,
-  possibly `/usr/lib/cgi-bin`.  Of course, CGI needs to be enabled on your
-  web server.
-
-. Schedule post processing. +
-  When `podrecast` downloads podcast files, it appends the suffix `.podrecast_download`.
-  Whatever post processing you plan, the file should be renamed (that is,
-  the suffix stripped) once that post processing is complete.  Only then
-  will _PRC_ serve the file via its CGI interface. +
-  There's a sample post-processing script in the `script` directory of the
-  git repository.
+[source, sh]
+----
+install -v -m 0555 podrecast /usr/local/bin/
+----
 ****
 
-.The CGI server:
+=== Configuration
+
 ****
-- URLs such as `http://SERVER/cgi-bin/podrecast/Cycling/Velo-Cast` deliver the
-  associated rss/xml feed, and
-- URLs such as `http://SERVER/cgi-bin/podrecast/Cycling/Velo-Cast/SOME_FILE.mp3`
-  deliver the associated podcast content.
+Create a configuration file, either in `/usr/local/etc/podrecast.conf` or in `/etc/podrecast.conf`.
+
+Here is an example.  A commented version of this sample is included in the
+`sample` directory in the git repository.
+
+.`/etc/podrecast.conf`:
+----
+root /home/blott/tmp/podrecast
+
+Cycling/Velo-Cast        http://velocastcc.squarespace.com/race-radio/rss.xml
+BBC/More-Or-Less         http://downloads.bbc.co.uk/podcasts/radio4/moreorless/rss.xml
+BBC/Life-Scientific      http://downloads.bbc.co.uk/podcasts/radio4/tls/rss.xml
+Economics/Freakonomics   http://feeds.feedburner.com/freakonomicsradio?format=xml
+----
+
+The root is the directory under which feeds and podcasts will be stored.
+This must come first.
+
+The feed lines each name first a subdirectory for the feed and then the
+feed's URL.  Feeds cannot share subdirectories.
+
+This configuration file needs to be in a system-wide location so that
+`podrecast` can find it when running as a CGI script.
 ****
 
-.Set up cron.
+=== Download Podcasts
+
+****
+[source, sh]
+----
+podrecast        # download all available podcasts
+# or
+podrecast -a     # automatically catchup on newly-added feeds
+# or
+podrecast -m 2   # download at most 2 podcasts from each feed
+----
+****
+
+=== Post Processing
+
+****
+When podcasts are downloaded, they are not immediately available for
+delivery.  First, they must be post processed.
+
+Here is an example.  A longer version of this script is in the
+`script` directory of the git repository.
+
+[source, sh]
+.podrecast_mp3gain:
+----
+#!/bin/sh
+
+gain=6
+
+for file in `podrecast --downloaded`
+do
+   nice nice mp3gain -r -c -p -t -m $gain $file \
+      && podrecast --ready $file
+done
+----
+
+Or, if you don't want to do any post processing, then it can be as simple
+as:
+
+[source, sh]
+.podrecast_simple:
+----
+#!/bin/sh
+
+podrecast --ready `podrecast --downloaded`
+----
+****
+
+=== Republish
+
+****
+Install `podrecast` in the CGI directory of your web server.  For me,
+that's `/usr/lib/cgi-bin/`:
+
+[source, sh]
+----
+install -v -m 0555 podrecast /usr/lib/cgi-bin/
+----
+
+The URL for your republished feed is:
+
+- `http://SERVER/CGI-BIN/SUBDIRECTORY`
+
+For example, in my own case it's:
+
+- `http://192.168.3.3/cgi-bin/podrecast/Cycling/Velo-Cast`
+****
+
+=== Set up `cron`
+
 ****
 My own `crontab` reads like:
 
 ----
+# download podcasts
 05 2,12,17,20,23 * * * chronic podrecast -a
+
+# post processing
 55 2,12,17,20,23 * * * chronic podrecast_mp3gain
 ----
 
 (`chronic` is part of the https://joeyh.name/code/moreutils/[moreutils]
-package.  It simplifies and improves crontabs, and is well worth a look.)
+package.  There's an explanation of the what and why or `chronic`
+http://www.ubuntujourneyman.com/2011/07/02/chronic-and-cron/[here].)
 ****
 
-.Command line arguments:
+// /////////////////////////////////////////////////////
+== Options ==
+
+.Downloading options:
 ****
-`-m MAX`::
+`-m MAX` | `--max=MAX`::
    The maximum number of podcasts to download, per feed.  The default is
    `0`, meaning download all available podcasts.
-`-c`::
+`-c` | `--catchup`::
    Catch up.  Mark all podcasts are downloaded, but do not actually download them.
-`-a`::
+`-a` | `--autocatchup`::
    Auto catch up.  Whenever (and only when) _PRC_ encounters
    a newly-configured feed, it marks all content as downloaded, but does
    not actually download them. +
    The idea is that newly-configured feeds may contain tens or even hundreds of
    podcasts, far more than most people actually want to download.
-`-r`::
-   Just output the root directory.  Useful for post-processing scripts to
-   find files for post processing.
-`-f`::
-   Just output a list of files which are ready for post processing.
+****
+
+.Post-processing options:
+****
+`-d` | `--downloaded`::
+   Output a list of files which have been downloaded and are ready for
+   post processing.
+`-r` | `--ready` `[FILES...]`::
+   Register these previously-downloaded files as now post processed, and
+   ready for delivery as podcasts.
 ****
 
 // /////////////////////////////////////////////////////
@@ -159,6 +251,7 @@ should not encounter partial downloads with normal-looking file names.
 `podrecast` _does not_ delete downloaded files.  Just use cron and
 `find` for that:
 
+[source, sh]
 ----
 find /MY/ROOT/DIRECTORY -type f -name '[^.]*' -mtime +20 -delete
 ----
@@ -169,11 +262,14 @@ itself.  Whenever it downloads a feed, it touches all of the state files
 related to enclosures mentioned in the feed.  Therefore, state files with
 old modification times can safely be deleted.  Something like:
 
+[source, sh]
 ----
+# This assumes that podrecast has in fact been run recently.
+#
 find /MY/ROOT/DIRECTORY -type f -name '.*.podrecast_done' -mtime +20 -delete
 ----
 
-However, there are usually not so many state files and they take up next
+However, there are usually not so many state files, and they take up next
 to no space, so I just let them be.
 ****
 
@@ -215,10 +311,10 @@ However, `podrecast` does do the following checks on incoming CGI requests:
 - The final path for a directory or file _must be inside the root
   directory_. +
   This may be an issue if you use symbolic links.
-- The path _may not_ contain the sequence "`..`". +
+- The path _may not_ contain the sequence " `..` ". +
   (Why on earth should it?)
-- The path _may not_ be more than 1000 characters long. +
-  (That's a lot of characters.  Anything longer is probably just someone
+- The path _may not_ be more than one thousand characters long. +
+  (That's a lot of characters.  Anything longer may be someone
   probing for vulnerabilities.)
 ****
 

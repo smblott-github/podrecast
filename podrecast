@@ -25,8 +25,9 @@ parser = OptionParser(epilog=help_text[1:])
 parser.add_option("-m", "--max",         type=int,            dest="max",         default=0,     help="the maximum number of podcasts to download from each feed (default: 0, meaning download all new podcasts)")
 parser.add_option("-c", "--catchup",     action="store_true", dest="catchup",     default=False, help="mark all podcasts as read")
 parser.add_option("-a", "--autocatchup", action="store_true", dest="autocatchup", default=False, help="mark all podcasts in newly-encountered feeds as read; a feed is \"newly-encountered\" if either its directory or its feed file does not initially exist")
-parser.add_option("-r", "--roots",       action="store_true", dest="roots",       default=False, help="output only a list of configured root directories")
-parser.add_option("-f", "--files",       action="store_true", dest="files",       default=False, help="output only a list of files ready for post processing")
+
+parser.add_option("-d", "--downloaded",  action="store_true", dest="downloaded",  default=False, help="output a list of files which have been downloaded, and now require post processing")
+parser.add_option("-r", "--ready",       action="store_true", dest="ready",       default=False, help="register the files named on the command line as now post processed, and ready for delivery")
 
 (options, args) = parser.parse_args()
 
@@ -197,6 +198,10 @@ def read_config(config,locking=False):
       if len(line) != 2:
          raise Exception("config error: invalid line in {}: {}".format(config," ".join(line)))
    return lines
+
+def read_roots(quiet=False):
+   roots = [ line for line in read_config(choose_config(quiet)) if line[0] == "root" ]
+   return roots
 
 # ###########################################################################
 # Handle feeds and enclosures...
@@ -385,17 +390,6 @@ def handle_cgi_file(path):
    fd_copy(fd,sys.stdout.fileno())
 
 # ###########################################################################
-# Root directories...
-
-def read_roots(quiet=False):
-   roots = [ line for line in read_config(choose_config(quiet)) if line[0] == "root" ]
-   return roots
-
-def show_roots():
-   for root in read_roots(True):
-      print root[1]
-
-# ###########################################################################
 # Files ready for post processing...
 
 def show_downloaded():
@@ -410,6 +404,23 @@ def find_downloaded(path):
             yield os.path.join(root,f)
 
 # ###########################################################################
+# Register files as post processed, and now ready for delivery...
+
+def strip_suffix(text, suffix):
+    return text[:len(text)-len(suffix)]
+
+def make_ready(files):
+   for f in files:
+      if not os.path.isfile(f):
+         raise Exception("error: file does no exist: " + f)
+      if not f.endswith(DOWNLOAD_SUFFIX):
+         raise Exception("error: not a podrecast download file: " + f)
+      #
+      dst = strip_suffix(f,DOWNLOAD_SUFFIX) 
+      os.rename(f,dst)
+      log("install:", dst)
+
+# ###########################################################################
 # Main...
 
 if __name__ == "__main__":
@@ -422,12 +433,16 @@ if __name__ == "__main__":
          cgi_error(str(error))
       sys.exit(0)
    #
-   if options.files:
+   if options.downloaded:
       show_downloaded()
       option_handled = True
    #
-   if options.roots:
-      show_roots()
+   if options.ready:
+      try:
+         make_ready(args)
+      except Exception as error:
+         elog(str(error))
+         sys.exit(1)
       option_handled = True
    #
    if not option_handled:

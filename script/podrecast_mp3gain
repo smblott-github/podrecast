@@ -1,66 +1,44 @@
-#!/usr/bin/env zsh
-# vim: ft=zsh
+#!/bin/sh
 
-local suffix='.podrecast_download'
-local gain=6
+# Warning:
+# This script assumes that file names do not contain whitespace characters.
+#
 
 # ###########################################################################
 # Customisation...
 #
-# If ~/.podrecast_mp3gain exists and is executable, then it is sourced
-# here.  This provides an opportunity for customisation, such as renaming
-# or moving files.
+# If ~/.podrecast_mp3gain exists and is executable, then it is sourced.
+# This provides an opportunity for customisation, such as renaming,
+# deleting or moving files.
 #
 
-local rc="$HOME/.podrecast_mp3gain"
+rc="$HOME/.podrecast_mp3gain"
 
-if [[ -f $rc && -s $rc && -x $rc ]]
+if [ -f $rc ] && [ -s $rc ] && [ -x $rc ]
 then
-   print "source: $rc"
-   source $rc
-fi
-
-# ###########################################################################
-# Do we have mp3gain...?
-
-if ! which mp3gain > /dev/null
-then
-   print "error: could not find mp3gain executable" >&2
-   exit 1
+   echo "source: $rc"
+   . $rc
 fi
 
 # ###########################################################################
 # Do mp3gain...
 
-local -a extras
-
-if ! [[ -t 1 ]]
+if ! which mp3gain > /dev/null
 then
-   extras+=( '-q' )
+   echo "error: could not find mp3gain executable" >&2
+   exit 1
 fi
 
-__do_mp3gain ()
-{
-   local src="$argv[1]"
-   local dst="${src%$suffix}"
+gain=6
 
-   print "from:" $src
-   print "to:" $dst
+for file in `podrecast --downloaded`
+do
    (
       if flock -x -n 9
       then
-         nice nice mp3gain -r -c -p -t -m $gain $extras $src \
-            && [[ $src != $dst ]]                            \
-            && mv -v $src $dst
-      else
-         print "failed to lock:" $src
+         nice nice mp3gain -r -c -p -t -m $gain $file \
+            && podrecast --ready $file
       fi
-   ) 9< $src
-}
-
-# ###########################################################################
-# Apply __do_mp3gain...
-
-autoload -U zargs
-zargs -r -L 1 -- $( podrecast -f ) -- __do_mp3gain
+   ) 9< $file
+done
 

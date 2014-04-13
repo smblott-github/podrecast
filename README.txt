@@ -23,3 +23,7 @@ More information?
 See the project web page:
 
    - http://podrecast.smblott.org/
+
+Install:
+
+   - make cgi=/PATH/TO/CGI/DIRECTORY install

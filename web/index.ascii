@@ -8,11 +8,9 @@ re-publishing podcasts.
 // /////////////////////////////////////////////////////
 == Download/Installation ==
 
+.See:
 ****
-You need to clone the https://github.com/smblott-github/podrecast[git
-repository], and install from there.
-
-There are further instructions link:#how[below].
+- link:#how[Here].
 ****
 
 // /////////////////////////////////////////////////////
@@ -83,22 +81,23 @@ git clone https://github.com/smblott-github/podrecast.git
 cd podrecast
 ----
 
+[[install]]
 [source, sh]
 .Install:
 ----
-sudo make install
-# or
-sudo python setup.py
+sudo make cgi=/PATH/TO/YOUR/CGI/DIRECTORY install
+
+# For me, that's:
+sudo make cgi=/usr/lib/cgi-bin install
 ----
 
 [IMPORTANT]
 ====
 The setup script tries to install the `podrecast` CGI script.  However, it
-may not be able to locate your CGI directory, or it may choose the wrong
-directory.
+will not create the CGI directory.
 
-Observe the last few lines of the output of the setup script, above.  It will inform you whether and
-where the CGI script was installed.
+Observe the last few lines of the output of the setup script, above.  It
+will inform you whether and where the CGI script was installed.
 ====
 ****
 
@@ -152,7 +151,7 @@ podrecast        # download all available podcasts
 # or
 podrecast -c     # catch up
 # or
-podrecast -a     # automatically catch up (only catch up on newly-added feeds)
+podrecast -a     # automatic catch up (only catch up on newly-added feeds)
 # or
 podrecast -m 2   # download at most 2 podcasts from each feed
 ----
@@ -200,15 +199,17 @@ This too is installed by the setup script.
 === Republish
 
 ****
-To republish content, `podrecast` must be installed as a CGI script.
+To republish content, `podrecast` must be installed as a CGI script.  This
+should be done on installation. +
+See link:#install[here].
 
-If the setup script failed to locate your CGI directory, then you will have to install the script by hand. +
-Something like...
-
-[source, sh]
-----
-install -v -m 0555 podrecast YOUR_CGI_DIRECTORY
-----
+// If the setup script failed to locate your CGI directory, then you will have to install the script by hand. +
+// Something like...
+// 
+// [source, sh]
+// ----
+// install -v -m 0555 podrecast YOUR_CGI_DIRECTORY
+// ----
 
 The URLs for your republished feeds are of the form:
 
@@ -222,13 +223,13 @@ For example, with the sample configuration file above, they might be:
   `http://192.168.3.3/cgi-bin/podrecast/Economics/Freakonomics`
 ****
 
-=== Feed Links
+=== Feeds List
 
 ****
-_PodRecast_ also publishes a simple HTML page listing the links for its feeds.
+_PodRecast_ also publishes a simple HTML page listing its feeds' URLs.
 
-This can be useful for testing or for entering the links on mobile devices: point your
-device towards the feeds link and either click or copy the feeds
+This can be useful for testing or for entering the URLs on mobile devices: point your
+device towards the feeds list and either click or copy the feed URLs
 you're interested in.
 
 The URL for the feed list is:

@@ -1,12 +1,13 @@
 
 # Default CGI directory.  To choose another directory, use:
 #
-#    sudo make cgi=/PATH/TO/CGI install
+#    sudo make cgi=/PATH/TO/CGI/DIRECTORY install
 #
 cgi = /usr/lib/cgi-bin
 
 install:
-	CGI_DIR=$(cgi) python setup.py install
+	$(MAKE) build
+	sudo CGI_DIR=$(cgi) python setup.py install
 
 build:
 	python setup.py build

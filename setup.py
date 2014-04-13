@@ -22,16 +22,16 @@ class Installer(Install):
          print "WARNING:"
          print "   Could not find the cgi directory."
          print "   Everything has been installed *except* for the cgi script."
-         print "   Please install it manually, or set a CGI_DIR"
-         print "   environment variable. Try one of..."
+         print "   Please install run 'make install' as follows"
          print
-         print "      sudo make cgi=/PATH/TO/CGI install"
-         print "      sudo CGI_DIR=/PATH/TO/CGI python setup.py"
+         print "      make cgi=/PATH/TO/CGI/DIRECTORY install"
+         print
+         sys.exit(1)
 
    def find_cgi(self):
       #
       if self.cgi_dir not in os.environ:
-         print "CMD_DIR not set"
+         print "{} is not set".format(self.cgi_dir)
          return None
       #
       cgi = os.environ[self.cgi_dir]

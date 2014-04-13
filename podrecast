@@ -423,21 +423,17 @@ def handle_cgi_file(path):
    fd_copy(fd,sys.stdout.fileno())
 
 # ###########################################################################
-# Files ready for post processing...
+# Show files ready for post processing...
 
 def show_downloaded():
-   for root in read_roots(True):
-      for f in find_downloaded(root[1]):
-         print f
-
-def find_downloaded(path):
-   for root, dirs, files in os.walk(path):
-      for f in files:
-         if f.endswith(DOWNLOAD_SUFFIX):
-            yield os.path.join(root,f)
+   for IGNORED, root in read_roots(True):
+      for path, dirs, files in os.walk(root):
+         for f in files:
+            if f.endswith(DOWNLOAD_SUFFIX):
+               print os.path.join(path,f)
 
 # ###########################################################################
-# Generate an index of available feeds...
+# Generate an index of the available feeds...
 
 def list_feeds(config=None):
    if not config:

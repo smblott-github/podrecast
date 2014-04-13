@@ -50,8 +50,9 @@ os.umask(umask)
 def done_file(fname):
    return "." + fname + ".podrecast_done"
 
+DOWNLOAD_SUFFIX = ".podrecast_download"
 def download_file(fname):
-   return fname + ".podrecast_download"
+   return fname + DOWNLOAD_SUFFIX
 
 def feed_file():
    return ".podrecast_feed.xml"
@@ -60,9 +61,8 @@ def feed_file():
 # The first available configuration file is chosen.
 #
 # If using the CGI functionality of podrecast, then it makes sense to use
-# "/etc/podrecast.conf" or "/usr/local/etc/podrecast.conf", because these are
-# the only two which are available to users, including the user account
-# under which the web server is running.
+# "/etc/podrecast.conf" or "/usr/local/etc/podrecast.conf", because
+# the web server will only be able to find system-wide configuration files.
 
 configs = [ "./podrecast.conf",
             "~/.podrecast.conf",
@@ -141,8 +141,7 @@ def mime_file(fname,fallback,arg):
       with open(os.devnull,"w") as devnull:
          pipe = Popen(['file', '-b', arg, fname], stdout=PIPE, stderr=devnull)
       result = pipe.stdout.readline().strip()
-      if pipe.wait() == 0 and result:
-         return result
+      return result if pipe.wait() == 0 and result else fallback
    except:
       return fallback
 
@@ -159,6 +158,9 @@ try:
    from lxml import objectify, etree
 except:
    elog("import error: package/module python-lxml not found")
+   elog("import error: please install it")
+   elog("import error: on debian, it's...")
+   elog("import error: sudo apt-get install python-lxml")
    sys.exit(1)
 
 # ###########################################################################
@@ -168,8 +170,7 @@ def choose_config(quiet=False):
    for config in configs:
       config = os.path.expanduser(config)
       if os.path.isfile(config) and os.access(config, os.R_OK):
-         if not quiet:
-            log("config:", config)
+         if not quiet: log("config:", config)
          return config
    raise Exception("could failed to find config file: " + str(configs))
 
@@ -183,7 +184,6 @@ def read_config(config,locking=False):
       try:
          flock(lock.fileno(), LOCK_EX | LOCK_NB)
       except:
-         lock = None
          raise Exception("locking, would block: " + config)
    else:
       lock = None
@@ -193,6 +193,9 @@ def read_config(config,locking=False):
    lines = [ line for line in lines if len(line) ]
    lines = [ line for line in lines if not line.startswith("#") ]
    lines = [ line.split() for line in lines ]
+   for line in lines:
+      if len(line) != 2:
+         raise Exception("config error: invalid line in {}: {}".format(config," ".join(line)))
    return lines
 
 # ###########################################################################
@@ -202,16 +205,12 @@ def download_feeds(config,options):
    global errors
    for line in read_config(config,True):
       if line[0] == "root":
-         if len(line) != 2:
-            raise Exception("config: invalid root directive: " + str(line))
          root = line[1]
          if not os.path.isabs(root):
             raise Exception("config: root must be an absolute path: " + str(line))
          chdir(root)
       else:
          try:
-            if len(line) != 2:
-               raise Exception("config: invalid feed: " + str(line))
             directory, url = line
             download_feed(directory,url,options)
          except (KeyboardInterrupt, SystemExit):
@@ -303,7 +302,7 @@ def handle_enclosure(enclosure,options):
       touch(done_file(fname))
       return
    #
-   # OK.  Download the file.
+   # OK.  Download the file...
    wget(urlunparse(url),download_file(fname))
    touch(done_file(fname))
 
@@ -311,30 +310,29 @@ def handle_enclosure(enclosure,options):
 # Handle cgi requests...
 
 def handle_cgi():
-   roots = [ line for line in read_config(choose_config()) if line[0] == "root" ]
-   #
-   if len(roots) != 1 or len(roots[0]) != 2:
-      cgi_error("for CGI, there must be a single, valid root")
+   roots = read_roots()
+   if len(roots) != 1:
+      raise Exception("for CGI, there must be a single, valid root")
    #
    root = roots[0][1]
    path = root + os.environ['PATH_INFO']
    #
    # A few simple checks for potentially malicious arguments...
-   # These checks are far from exhaustive.
+   # These checks do not render podrecast secure!
    #
    if not path_has_prefix(path,root):
-      cgi_error("PATH_INFO, invalid", path)
+      raise Exception("PATH_INFO, invalid", path)
    if '..' in path:
-      cgi_error("PATH_INFO, dangerous looking path", path)
+      raise Exception("PATH_INFO, dangerous looking path", path)
    if 1000 < len(path):
-      cgi_error("PATH_INFO, path too long", path)
+      raise Exception("PATH_INFO, path too long", path)
    #
    if os.path.isdir(path) and os.access(path, os.R_OK) and os.access(path, os.X_OK):
       return handle_cgi_directory(path)
    if os.path.isfile(path) and os.access(path, os.R_OK):
       return handle_cgi_file(path)
    #
-   cgi_error("PATH_INFO, path not found", path)
+   raise Exception("PATH_INFO, path not found", path)
 
 def path_has_prefix(path,prefix):
    path = os.path.realpath(path)
@@ -348,9 +346,9 @@ def handle_cgi_directory(path):
    chdir(path)
    #
    if not os.path.isfile(feed_file()):
-      cgi_error("file does not exist", path)
+      raise Exception("feed file does not exist", path)
    if not os.access(feed_file(), os.R_OK):
-      cgi_error("file not readable", path)
+      raise Exception("feed file not readable", path)
    #
    feed, enclosures = slurp_enclosures(feed_file())
    for enclosure in enclosures:
@@ -365,7 +363,7 @@ def handle_cgi_directory(path):
       http_host = os.environ['HTTP_HOST']
       script_name = os.environ['SCRIPT_NAME']
       path_info = os.environ['PATH_INFO']
-      attributes["url"] = "http://" + http_host + script_name + path_info + "/" + fname
+      attributes["url"] = "http://{}{}{}/{}".format(http_host,script_name,path_info,fname)
    #
    mime = 'text/xml'
    encoding = mime_encoding(feed_file(), "utf-8");
@@ -390,57 +388,53 @@ def handle_cgi_file(path):
 # Root directories...
 
 def read_roots(quiet=False):
-   return [ line for line in read_config(choose_config(quiet)) if line[0] == "root" ]
+   roots = [ line for line in read_config(choose_config(quiet)) if line[0] == "root" ]
+   return roots
 
 def show_roots():
    for root in read_roots(True):
-      if len(root) == 2:
-         print root[1]
-      else:
-         elog("error: invalid root: " + str(root))
-         sys.exit(1)
+      print root[1]
 
 # ###########################################################################
 # Files ready for post processing...
 
-def show_files():
+def show_downloaded():
    for root in read_roots(True):
-      if len(root) == 2:
-         walk_root(root)
-      else:
-         elog("error: invalid root: " + str(root))
-         sys.exit(1)
+      for f in find_downloaded(root[1]):
+         print f
 
-def walk_root(path):
-   path = path[1]
-   try:
-      for root, dirs, files in os.walk(path):
-         for f in files:
-            if f.endswith(".podrecast_download"):
-               print os.path.join(root,f)
-   except:
-      elog("failed to traverse:", path)
-      sys.exit(1)
+def find_downloaded(path):
+   for root, dirs, files in os.walk(path):
+      for f in files:
+         if f.endswith(DOWNLOAD_SUFFIX):
+            yield os.path.join(root,f)
 
 # ###########################################################################
 # Main...
 
 if __name__ == "__main__":
+   option_handled = False
+   #
+   if cgi:
+      try:
+         handle_cgi()
+      except Exception as error:
+         cgi_error(str(error))
+      sys.exit(0)
    #
    if options.files:
-      show_files()
-      sys.exit(0)
+      show_downloaded()
+      option_handled = True
    #
    if options.roots:
       show_roots()
-      sys.exit(0)
+      option_handled = True
    #
-   if cgi:
-      handle_cgi()
-      sys.exit(0)
+   if not option_handled:
+      download_feeds(choose_config(),options)
+      if ( 0 < errors ):
+         elog("errors:", str(errors))
+         sys.exit(1)
    #
-   download_feeds(choose_config(),options)
-   if ( 0 < errors ):
-      elog("errors:", str(errors))
-      sys.exit(1)
+   sys.exit(0)
 

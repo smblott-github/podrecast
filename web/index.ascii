@@ -127,8 +127,6 @@ Here is an example...
 
 [source, changelog]
 ----
-# /usr/local/etc/podrecast.conf
-
 root /home/blott/tmp/podrecast
 
 Cycling/Velo-Cast        http://velocastcc.squarespace.com/race-radio/rss.xml

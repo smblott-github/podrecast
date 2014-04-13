@@ -426,7 +426,7 @@ def html_feed_items(prefix):
             yield html_feed_item(prefix,feed)
 
 def html_feed_item(prefix,feed):
-   return '<li>\n  <a href="{0}" type="<text/xml>">{1}</a>\n  <br>\n  <tt><pre>{0}</pre></tt>\n</li>'.format(prefix+feed,feed)
+   return '<li>\n  <a href="{0}" type="<text/xml>">{1}</a>\n  <br>\n  <tt><pre>{0}</pre></tt>\n  <br>\n</li>'.format(prefix+feed,feed)
 
 def feed_index(root,prefix):
    chdir(root)

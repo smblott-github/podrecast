@@ -10,7 +10,7 @@ re-publishing podcasts.
 
 .Currently:
 ****
-- you need to clone the https://github.com/smblott-github/podrecast[git
+- You need to clone the https://github.com/smblott-github/podrecast[git
   repository], and install from there. +
   There are instructions link:#how[below].
 ****
@@ -54,17 +54,19 @@ embedded in the feed.
 
 .The workflow is as follows:
 ****
-- Download feeds and new podcasts to local storage, typically via a cron job. +
+- Download feeds and new podcasts to local storage. +
   _PodRecast_ does this.
 
 - Post-process podcasts. +
   _PodRecast_ does not do this, although there is a suitable MP3Gain
-  post-processing script in the repository.
+  post-processing script in the repository.  See also link:#post[here].
 
 - _PodRecast_, serving now as a CGI script, then publishes *exactly* the original feed's
   rss/XML, but with each enclosure's URL replaced with a local URL referencing
   a local, post-processed file. +
   _PodRecast_ does this.
+
+All of this can be driven by link:#cron[cron].
 ****
 
 // /////////////////////////////////////////////////////
@@ -102,7 +104,9 @@ install -v -m 0555 podrecast /usr/local/bin/
 Create a configuration file, either in `/usr/local/etc/podrecast.conf` or in `/etc/podrecast.conf`.
 
 Here is an example. +
-A commented version of this sample is included in the `sample` directory in the git repository.
+A https://github.com/smblott-github/podrecast/tree/master/sample[commented
+version] of this sample is included in the `sample` directory in the git
+repository.
 
 .`/etc/podrecast.conf`:
 [source, changelog]
@@ -129,23 +133,28 @@ This configuration file needs to be in a system-wide location so that
 
 ****
 [source, sh]
+.One of:
 ----
 podrecast        # download all available podcasts
 # or
-podrecast -a     # automatically catchup on newly-added feeds
+podrecast -c     # catch up
+# or
+podrecast -a     # automatically catch up, only on newly-added feeds
 # or
 podrecast -m 2   # download at most 2 podcasts from each feed
 ----
 ****
 
+[[post]]
 === Post Processing
 
 ****
 When podcasts are downloaded, they are not immediately available for
 delivery.  First, they must be post processed.
 
-Here is an example.  A longer version of this script is in the
-`script` directory of the git repository.
+Here is an example.
+A https://github.com/smblott-github/podrecast/blob/master/script/podrecast_mp3gain[longer
+version] of this script is in the `script` directory of the git repository.
 
 [source, sh]
 .podrecast_mp3gain:
@@ -162,7 +171,7 @@ do
 done
 ----
 
-Or, if you don't want to do any post processing, then it can be as simple
+Or, if you don't want to do any post processing at all, then it can be as simple
 as:
 
 [source, sh]
@@ -209,13 +218,14 @@ you're interested in.
 The URL for the feed list is:
 
 - `http://SERVER/CGI-BIN/podrecast/` +
-  (The trailing `/` must be included.)
+  (The trailing `/` is required.)
 
 For example, in my own case, it's:
 
 - `http://192.168.3.3/cgi-bin/podrecast/`
 ****
 
+[[cron]]
 === Set up `cron`
 
 ****

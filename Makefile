@@ -20,7 +20,7 @@ cgierror:
 # appropriate for all systems.
 #
 install:
-	sudo install -vm 0555 podrecast script/podrecast_mp3gain /usr/local/bin
+	sudo install -vm 0555 podrecast script/podrecast_mp3gain script/podrecast_simple /usr/local/bin
 	sudo install -vm 0555 podrecast /usr/lib/cgi-bin
 	# pretend to be lagacy CGI script "podcast"...
 	sudo install -vm 0555 podrecast /usr/lib/cgi-bin/podcast

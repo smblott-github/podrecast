@@ -1,0 +1,3 @@
+#!/bin/sh
+
+podrecast --ready `podrecast --downloaded`

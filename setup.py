@@ -26,8 +26,7 @@ setup(name='podrecast',
       )
 
 if cgi:
-   directory, [ scripts ] = cgi[0]
-   script = "{}/{}".format(directory,scripts[0])
+   directory, [ script ] = cgi[0]
    print 'changing mode of {} to 0555'.format(script)
    os.chmod(script,0o555)
    print "CGI script successfully installed in", script

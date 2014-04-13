@@ -3,8 +3,8 @@ Stephen Blott <smblott+prc@gmail.com>
 :toc2:
 
 ****
-_PodRecast_ is a podcast aggregator for post-processing then
-re-publishing podcasts.
+_PodRecast_ is a podcast aggregator for downloading, post-processing, then
+republishing podcasts.
 ****
 
 .Quick links:
@@ -33,7 +33,7 @@ For me, two reasons:
   both quiet and noisy environments.
 
 _PodRecast_ enables such post processing by downloading podcasts to a local
-system, then republishing them.
+system, post processing them, then republishing them.
 ****
 
 // /////////////////////////////////////////////////////

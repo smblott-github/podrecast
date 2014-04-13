@@ -4,6 +4,9 @@ include $(HOME)/.gnumake.mk
 .PHONY: build install
 
 target += index.html
+target += ../script/podrecast_mp3gain
+target += ../script/podrecast_simple
+target += ../sample/podrecast.conf.sample
 
 build: $(target)
 	@true

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+version = "1.0.0"
+
 # ###########################################################################
 # Imports...
 
@@ -8,28 +10,49 @@ from tempfile   import mkstemp
 from urlparse   import urlparse, urlunparse
 from fcntl      import flock, LOCK_EX, LOCK_NB
 from subprocess import call, Popen, PIPE
-from optparse   import OptionParser
+from optparse   import OptionParser, OptionGroup
 from copy       import copy
 
 # ###########################################################################
 # Command-line arguments...
 
 help_text ='''
-Normally, podrecast downloads new podcast files in acordance with its
+Normally, podrecast downloads podcast files in acordance with its
 configuration and arguments.  However, if the following four CGI environment
 variables are all defined, then it behaves instead as a CGI script:
 REQUEST_METHOD, HTTP_HOST, SCRIPT_NAME and PATH_INFO.
 '''
 
-parser = OptionParser(epilog=help_text[1:])
-parser.add_option("-m", "--max",         type=int,            dest="max",         default=0,     help="the maximum number of podcasts to download from each feed (default: 0, meaning download all new podcasts)")
-parser.add_option("-c", "--catchup",     action="store_true", dest="catchup",     default=False, help="mark all podcasts as read")
-parser.add_option("-a", "--autocatchup", action="store_true", dest="autocatchup", default=False, help="mark all podcasts in newly-encountered feeds as read; a feed is \"newly-encountered\" if either its directory or its feed file does not initially exist")
+parser = OptionParser(epilog=help_text[1:], version="%prog v{}".format(version))
+dopts = OptionGroup(parser, "Download options")
+popts = OptionGroup(parser, "Post-processing options")
 
-parser.add_option("-d", "--downloaded",  action="store_true", dest="downloaded",  default=False, help="output a list of files which have been downloaded, and now require post processing")
-parser.add_option("-r", "--ready",       action="store_true", dest="ready",       default=False, help="register the files named on the command line as now post processed, and ready for delivery")
+dopts.add_option("-m", "--max",         type=int,            dest="maximum",     default=0,     help="the maximum number of podcasts to download from each feed (default: 0, meaning download all new podcasts)")
+dopts.add_option("-c", "--catchup",     action="store_true", dest="catchup",     default=False, help="mark all podcasts as read")
+dopts.add_option("-a", "--autocatchup", action="store_true", dest="autocatchup", default=False, help="mark all podcasts in newly-encountered feeds as read; a feed is \"newly-encountered\" if either its directory or its feed file does not initially exist")
 
+popts.add_option("-d", "--downloaded",  action="store_true", dest="downloaded",  default=False, help="output a list of files which have been downloaded, and now require post processing")
+popts.add_option("-r", "--ready",       action="store_true", dest="ready",       default=False, help="register the files named on the command line as now post processed, and ready for delivery")
+
+parser.add_option_group(dopts)
+parser.add_option_group(popts)
 (options, args) = parser.parse_args()
+
+if args and not options.ready:
+   parser.error("unused arguments: {}".format(" ".join(args)))
+
+have_download = options.maximum or options.catchup or options.autocatchup
+have_processing = options.downloaded or options.ready
+
+if have_download and have_processing:
+   parser.error("download and processing options are mutually exclusive")
+
+if options.downloaded and options.ready:
+   parser.error("these processing options are mutually exclusive")
+
+## download_options = [ options.maximum, options.catchup, options.autocatchup ]
+## if 1 < sum([ 1 if opt else 0 for opt in download_options ]):
+##    parser.error("these download options are mutually exclusive")
 
 # ###########################################################################
 # Globals and "constants", ...
@@ -242,9 +265,9 @@ def download_feed(directory,url,options):
       chdir(cwd)
       raise
    #
-   if 0 < options.max:
-      handle_enclosures = enclosures[:options.max]
-      catchup_enclosures = enclosures[options.max:]
+   if 0 < options.maximum:
+      handle_enclosures = enclosures[:options.maximum]
+      catchup_enclosures = enclosures[options.maximum:]
    else:
       handle_enclosures = enclosures
       catchup_enclosures = []

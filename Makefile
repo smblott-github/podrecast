@@ -17,7 +17,7 @@ cgierror:
 #
 # WARNING!
 # Don't run this install target blindly.  It works for me, but may not be
-# appropriate for all systems.
+# suitable for all systems.
 #
 install:
 	sudo install -vm 0555 podrecast script/podrecast_mp3gain script/podrecast_simple /usr/local/bin

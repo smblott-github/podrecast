@@ -209,6 +209,14 @@ My own `crontab` reads like:
 (`chronic` is part of the https://joeyh.name/code/moreutils/[moreutils]
 package.  There's an explanation of the what and why or `chronic`
 http://www.ubuntujourneyman.com/2011/07/02/chronic-and-cron/[here].)
+
+If you don't want to use `chronic`, then this should do the trick:
+
+[source, changelog]
+----
+05 2,12,17,20,23 * * * podrecast -a      > /dev/null
+55 2,12,17,20,23 * * * podrecast_mp3gain > /dev/null
+----
 ****
 
 // /////////////////////////////////////////////////////

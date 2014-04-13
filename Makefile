@@ -16,7 +16,7 @@ cgierror:
 
 #
 # WARNING!
-# Don't run this install target blindly.  It works for me, but may not be
+# Don't run this install target blindly. It works for me, but may not be
 # suitable for all systems.
 #
 install:

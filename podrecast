@@ -439,6 +439,7 @@ def feed_index(root,prefix):
    chdir(root)
    formatted_feeds = "\n".join(html_feed_items(prefix))
    #
+   title = 'PodRecast Feeds'
    a_little_css_for_mobile_devices = '''
       <style type="text/css">
          body
@@ -456,9 +457,9 @@ def feed_index(root,prefix):
    print '<html>'
    print '<head>'
    print a_little_css_for_mobile_devices
-   print '<title>{}</title>'.format("PodRecast Feeds")
+   print '<title>{}</title>'.format(title)
    print '</head>'
-   print "<h1>{}</h1>".format("PodRecast Feeds")
+   print "<h1>{}</h1>".format(title)
    print '<dl>'
    print formatted_feeds
    print '</dl>'
@@ -478,7 +479,18 @@ def list_feeds(config=None):
          yield line
 
 def html_feed_item(prefix,feed):
-   return ' <dt>\n   <a href="{0}" type="<text/xml>">{1}</a></dt>\n   <dd>\n    <tt><pre>{0}</pre></tt><br>\n   </dd>\n </dt>'.format(prefix+feed,feed.replace('/',', '))
+   url = prefix+feed
+   title = feed.replace('/',', ')
+   #
+   text  = ''
+   text += '  <dt>\n'
+   text += '     <a href="{0}" type="<text/xml>">{1}</a>\n'.format(url, title)
+   text += '  </dt>\n'
+   text += '  <dd>\n'
+   text += '     <tt><pre>{0}</pre></tt><br>\n'.format(url)
+   text += '  </dd>\n'
+   #
+   return text
 
 # ###########################################################################
 # Register files as post processed, and now ready for delivery...
@@ -486,6 +498,9 @@ def html_feed_item(prefix,feed):
 def strip_suffix(text, suffix):
     return text[:len(text)-len(suffix)]
 
+# TODO:
+# This should install as many as it can, then report however
+# many errors it encountered.
 def make_ready(files):
    for f in files:
       if not os.path.isfile(f):
@@ -494,6 +509,10 @@ def make_ready(files):
          raise Exception("error: not a podrecast download file: " + f)
       #
       dst = strip_suffix(f,DOWNLOAD_SUFFIX) 
+      #
+      if os.path.exists(dst):
+         raise Exception("error: target exist: " + dst)
+      #
       os.rename(f,dst)
       log("install:", dst)
 

@@ -459,9 +459,9 @@ def feed_index(root,prefix):
    print '<title>{}</title>'.format("PodRecast Feeds")
    print '</head>'
    print "<h1>{}</h1>".format("PodRecast Feeds")
-   print '<ul>'
+   print '<dl>'
    print formatted_feeds
-   print '</ul>'
+   print '</dl>'
    print '</html>'
 
 def html_feed_items(prefix):
@@ -478,7 +478,7 @@ def list_feeds(config=None):
          yield line
 
 def html_feed_item(prefix,feed):
-   return '<li>\n  <a href="{0}" type="<text/xml>">{1}</a>\n  <br>\n  <tt><pre>{0}</pre></tt>\n  <br>\n</li>'.format(prefix+feed,feed)
+   return ' <dt>\n   <a href="{0}" type="<text/xml>">{1}</a></dt>\n   <dd>\n    <tt><pre>{0}</pre></tt><br>\n   </dd>\n </dt>'.format(prefix+feed,feed.replace('/',', '))
 
 # ###########################################################################
 # Register files as post processed, and now ready for delivery...

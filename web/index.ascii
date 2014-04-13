@@ -83,7 +83,7 @@ All of this can be driven by link:#cron[cron].
 
 .Either:
 ****
-- download link:podrecast-1.0.0.tar.gz[this snapshot], or
+- download the link:podrecast-1.0.1.tar.gz[latest release], or
 - clone the git repository...
 
 [source, sh]

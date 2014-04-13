@@ -12,7 +12,7 @@ re-publishing podcasts.
 ****
 - you need to clone the https://github.com/smblott-github/podrecast[git
   repository], and install from there. +
-  There are instructions below.
+  There are instructions link:#how[below].
 ****
 
 // /////////////////////////////////////////////////////
@@ -68,6 +68,7 @@ embedded in the feed.
 ****
 
 // /////////////////////////////////////////////////////
+[[how]]
 == How? ==
 
 === Clone the Repository
@@ -150,6 +151,7 @@ Here is an example.  A longer version of this script is in the
 .podrecast_mp3gain:
 ----
 #!/bin/sh
+# Balance the gain across podcasts, and boost it.
 
 gain=6
 
@@ -187,16 +189,22 @@ The URL for your republished feed is:
 
 - `http://SERVER/CGI-BIN/podrecast/SUBDIRECTORY`
 
-For example, in my own case, it's:
+For example, with the sample configuration file above, it might be:
 
-- `http://192.168.3.3/cgi-bin/podrecast/Cycling/Velo-Cast`
+- `http://192.168.3.3/cgi-bin/podrecast/Cycling/Velo-Cast` +
+  `http://192.168.3.3/cgi-bin/podrecast/BBC/More-Or-Less` +
+  `http://192.168.3.3/cgi-bin/podrecast/BBC/Life-Scientific` +
+  `http://192.168.3.3/cgi-bin/podrecast/Economics/Freakonomics`
 ****
 
 === Feed Links
 
 ****
 _PodRecast_ also publishes a simple HTML page with links to its feeds.
-This can be useful for entering links on mobile devices.
+
+This can be useful for entering the links on mobile devices: point your
+device towards the feed link (below) and either click or select the feeds
+you're interested in.
 
 The URL for the feed list is:
 

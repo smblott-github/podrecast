@@ -426,7 +426,7 @@ def html_feed_items(prefix):
             yield html_feed_item(prefix,feed)
 
 def html_feed_item(prefix,feed):
-   return '<li><a href="{0}">{1}</a><br><tt><pre>{0}</pre></tt></li>'.format(prefix+feed,feed)
+   return '<li>\n  <a href="{0}" type="<text/xml>">{1}</a>\n  <br>\n  <tt><pre>{0}</pre></tt>\n</li>'.format(prefix+feed,feed)
 
 def feed_index(root,prefix):
    chdir(root)
@@ -436,8 +436,8 @@ def feed_index(root,prefix):
    print "<head><title>{}</title></head>".format("PodRecast Feeds")
    print "<h1>{}</h1>".format("PodRecast Feeds")
    print '<ul>'
-   for li in html_feed_items(prefix):
-      print li
+   for feed in html_feed_items(prefix):
+      print feed
    print '</ul>'
    print '</html>'
 

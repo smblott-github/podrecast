@@ -1,0 +1,5 @@
+
+Just:
+
+   - make cgi=/PATH/TO/CGI/DIRECTORY install
+

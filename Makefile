@@ -7,6 +7,9 @@ test:
 cgi:
 	REQUEST_METHOD=GET PATH_INFO=/Cycling/Velo-Cast HTTP_HOST=localhost SCRIPT_NAME=/cgi-bin/podrecast python ./podrecast
 
+index:
+	REQUEST_METHOD=GET PATH_INFO=/ HTTP_HOST=localhost SCRIPT_NAME=/cgi-bin/podrecast python ./podrecast
+
 cgierror:
 	REQUEST_METHOD=GET PATH_INFO=/Cycling/Velo-Cast/../../../../../x HTTP_HOST=localhost SCRIPT_NAME=/cgi-bin/podrecast python ./podrecast
 	REQUEST_METHOD=GET PATH_INFO=/Cycling/Velo-CastXX HTTP_HOST=localhost SCRIPT_NAME=/cgi-bin/podrecast python ./podrecast

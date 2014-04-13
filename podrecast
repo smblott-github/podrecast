@@ -320,6 +320,14 @@ def handle_cgi():
       raise Exception("for CGI, there must be a single, valid root")
    #
    root = roots[0][1]
+   #
+   if os.environ['PATH_INFO'] == '/':
+      http_host = os.environ['HTTP_HOST']
+      script_name = os.environ['SCRIPT_NAME']
+      prefix = "http://{}{}/".format(http_host,script_name)
+      feed_index(roots[0][1],prefix)
+      return
+   #
    path = root + os.environ['PATH_INFO']
    #
    # A few simple checks for potentially malicious arguments...
@@ -402,6 +410,38 @@ def find_downloaded(path):
       for f in files:
          if f.endswith(DOWNLOAD_SUFFIX):
             yield os.path.join(root,f)
+
+# ###########################################################################
+# Generate an index of available feeds...
+
+def list_feeds(config=None):
+   if not config:
+      config = choose_config(True)
+   for line in read_config(config):
+      if line[0] != 'root':
+         yield line
+
+def html_feed_items(prefix):
+   for feed, url in list_feeds():
+      if os.path.isdir(feed):
+         if os.access(os.path.join(feed,feed_file()), os.R_OK):
+            yield html_feed_item(prefix,feed)
+
+def html_feed_item(prefix,feed):
+   return '<li><a href="{0}">{1}</a><br><tt><pre>{0}</pre></tt></li>'.format(prefix+feed,feed)
+
+def feed_index(root,prefix):
+   chdir(root)
+   print 'Content-Type: text/html'
+   print
+   print '<html>'
+   print "<head><title>{}</title></head>".format("PodRecast Feeds")
+   print "<h1>{}</h1>".format("PodRecast Feeds")
+   print '<ul>'
+   for li in html_feed_items(prefix):
+      print li
+   print '</ul>'
+   print '</html>'
 
 # ###########################################################################
 # Register files as post processed, and now ready for delivery...

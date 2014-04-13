@@ -185,11 +185,27 @@ install -v -m 0555 podrecast /usr/lib/cgi-bin/
 
 The URL for your republished feed is:
 
-- `http://SERVER/CGI-BIN/SUBDIRECTORY`
+- `http://SERVER/CGI-BIN/podrecast/SUBDIRECTORY`
 
-For example, in my own case it's:
+For example, in my own case, it's:
 
 - `http://192.168.3.3/cgi-bin/podrecast/Cycling/Velo-Cast`
+****
+
+=== Feed Links
+
+****
+_PodRecast_ also publishes a simple HTML page with links to its feeds.
+This can be useful for entering links on mobile devices.
+
+The URL for the feed list is:
+
+- `http://SERVER/CGI-BIN/podrecast/` +
+  (The trailing `/` must be included.)
+
+For example, in my own case, it's:
+
+- `http://192.168.3.3/cgi-bin/podrecast/`
 ****
 
 === Set up `cron`

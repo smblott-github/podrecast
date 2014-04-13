@@ -13,5 +13,5 @@ www = public_html/podrecast/
 
 install:
 	$(MAKE) build
-	rsync -av --delete $(target) $(srv):$(www)
+	rsync -av --delete $(target) ../dist/*.tar.gz $(srv):$(www)
 

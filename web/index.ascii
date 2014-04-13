@@ -70,17 +70,23 @@ All of this can be driven by link:#cron[cron].
 [[how]]
 == How? ==
 
+=== Getting the Source
+
+.Either:
+****
+- download link:podrecast-1.0.0.tar.gz[this snapshot], or
+- clone the git repository...
+
+[source, sh]
+----
+git clone https://github.com/smblott-github/podrecast.git
+----
+****
+
+[[install]]
 === Install
 
 ****
-[source, sh]
-.Clone the git repository:
-----
-git clone https://github.com/smblott-github/podrecast.git
-cd podrecast
-----
-
-[[install]]
 [source, sh]
 .Install:
 ----
@@ -103,9 +109,10 @@ will inform you whether and where the CGI script was installed.
 === Configuration
 
 ****
-Create a configuration file:
+Create a configuration file, one of:
 
-- `/usr/local/etc/podrecast.conf`
+- `/usr/local/etc/podrecast.conf` +
+  `/etc/podrecast.conf`
 
 Here is an example...
 
@@ -195,7 +202,7 @@ podrecast --ready `podrecast --downloaded`
 This script is also installed by the setup script.
 ****
 
-=== Republish
+=== Republishing
 
 ****
 To republish content, `podrecast` must be installed as a CGI script.  This
@@ -210,7 +217,7 @@ See link:#install[here].
 // install -v -m 0555 podrecast YOUR_CGI_DIRECTORY
 // ----
 
-The URLs for your republished feeds are of the form:
+The URLs for republished feeds are of the form:
 
 - `http://SERVER/CGI-BIN/podrecast/FEEDDIRECTORY`
 

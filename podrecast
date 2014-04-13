@@ -321,10 +321,8 @@ def handle_cgi():
    #
    root = roots[0][1]
    #
-   if os.environ['PATH_INFO'] == '/' or os.environ['PATH_INFO'] == '':
-      http_host = os.environ['HTTP_HOST']
-      script_name = os.environ['SCRIPT_NAME']
-      prefix = "http://{}{}/".format(http_host,script_name)
+   if os.environ['PATH_INFO'] == '/':
+      prefix = "http://{}{}/".format(os.environ['HTTP_HOST'],os.environ['SCRIPT_NAME'])
       feed_index(root,prefix)
       return
    #

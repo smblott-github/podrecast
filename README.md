@@ -1,7 +1,7 @@
 PodRecast
 =========
 
-PodRecast -- a podcast aggregator for post-processing then re-publishing podcasts.
+PodRecast -- a podcast aggregator for downloading, post-processing then re-publishing podcasts.
 
 ## What is this?
 

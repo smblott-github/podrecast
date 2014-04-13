@@ -435,12 +435,34 @@ def show_downloaded():
 # ###########################################################################
 # Generate an index of the available feeds...
 
-def list_feeds(config=None):
-   if not config:
-      config = choose_config(True)
-   for line in read_config(config):
-      if line[0] != 'root':
-         yield line
+def feed_index(root,prefix):
+   chdir(root)
+   formatted_feeds = "\n".join(html_feed_items(prefix))
+   #
+   a_little_css_for_mobile_devices = '''
+      <style type="text/css">
+         body
+         {
+            background-color: #101010;
+            color: #606060;
+            font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+            font-size: 150%;
+         }
+      </style>
+      '''
+   #
+   print 'Content-Type: text/html'
+   print
+   print '<html>'
+   print '<head>'
+   print a_little_css_for_mobile_devices
+   print '<title>{}</title>'.format("PodRecast Feeds")
+   print '</head>'
+   print "<h1>{}</h1>".format("PodRecast Feeds")
+   print '<ul>'
+   print formatted_feeds
+   print '</ul>'
+   print '</html>'
 
 def html_feed_items(prefix):
    for feed, url in list_feeds():
@@ -448,21 +470,15 @@ def html_feed_items(prefix):
          if os.access(os.path.join(feed,feed_file()), os.R_OK):
             yield html_feed_item(prefix,feed)
 
+def list_feeds(config=None):
+   if not config:
+      config = choose_config(True)
+   for line in read_config(config):
+      if line[0] != 'root':
+         yield line
+
 def html_feed_item(prefix,feed):
    return '<li>\n  <a href="{0}" type="<text/xml>">{1}</a>\n  <br>\n  <tt><pre>{0}</pre></tt>\n  <br>\n</li>'.format(prefix+feed,feed)
-
-def feed_index(root,prefix):
-   chdir(root)
-   print 'Content-Type: text/html'
-   print
-   print '<html>'
-   print "<head><title>{}</title></head>".format("PodRecast Feeds")
-   print "<h1>{}</h1>".format("PodRecast Feeds")
-   print '<ul>'
-   for feed in html_feed_items(prefix):
-      print feed
-   print '</ul>'
-   print '</html>'
 
 # ###########################################################################
 # Register files as post processed, and now ready for delivery...

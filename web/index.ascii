@@ -228,11 +228,13 @@ If you don't want to use `chronic`, then this should do the trick:
    The maximum number of podcasts to download, per feed.  The default is
    `0`, meaning download all available podcasts.
 `-c` | `--catchup`::
-   Catch up.  Mark all podcasts are downloaded, but do not actually download them.
+   Catch up. +
+   Mark all podcasts are downloaded, but do not actually download them.
 `-a` | `--autocatchup`::
-   Auto catch up.  Whenever (and only when) _PodRecast_ encounters
+   Auto catch up. +
+   Whenever (and only when) _PodRecast_ encounters
    a newly-configured feed, it marks all content as downloaded, but does
-   not actually download them. +
+   not actually download it. +
    The idea is that newly-configured feeds may contain tens or even hundreds of
    podcasts, far more than most people actually want to download.
 ****
@@ -248,7 +250,7 @@ If you don't want to use `chronic`, then this should do the trick:
 ****
 
 // /////////////////////////////////////////////////////
-== Final Comments ==
+== Miscellaneous ==
 
 .Authentication:
 ****

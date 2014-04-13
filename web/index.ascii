@@ -70,6 +70,15 @@ All of this can be driven by link:#cron[cron].
 [[how]]
 == How? ==
 
+=== Dependencies
+
+.Dependencies:
+****
+- Python: 2.6 or 2.7; not 3.x.
+- `lxml`: this is `python-lxml` on Debian.
+- `wget`
+****
+
 === Getting the Source
 
 .Either:

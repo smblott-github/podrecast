@@ -4,7 +4,7 @@ import os
 from distutils.core import setup
 
 cgi  = []
-cgis = [ '/usr/lib/cgi-bin' ]
+cgis = [ '/usr/lib/cgi-bin', '/usr/lib/cgi', '/var/www/cgi-bin', '/var/www/cgi' ]
 
 for directory in cgis:
    if os.path.isdir(directory):
@@ -25,12 +25,14 @@ setup(name='podrecast',
       data_files=[ ( '/usr/local/etc', [ 'sample/podrecast.conf.sample' ] ), ] + cgi,
       )
 
+print
 if cgi:
    directory, [ scriptname ] = cgi[0]
    script = "{}/{}".format(directory,scriptname)
    print 'changing mode of {} to 0555'.format(script)
    os.chmod(script,0o555)
    print "CGI script successfully installed in", script
+   print "please verify that this is the correct CGI directory"
 else:
    print "WARNING: Everything installed *except* for the cgi script."
    print "         Could not find the CGI directory."

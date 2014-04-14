@@ -12,6 +12,7 @@ from fcntl      import flock, LOCK_EX, LOCK_NB
 from subprocess import call, Popen, PIPE
 from optparse   import OptionParser, OptionGroup
 from copy       import copy
+# from urllib     import urlretrieve
 
 # ###########################################################################
 # Command-line arguments...
@@ -141,33 +142,17 @@ def chdir(directory):
 # Wget...
 
 def wget(url,fname,options=[]):
-   return wget_internal(url,fname,options)
+   return wget_external(url,fname,options)
 
-# def wget_external(url,fname,options=[]):
-#    tmp = None
-#    extras = [ '-q' ] if not sys.stdout.isatty() else []
-#    log("wget:", url)
-#    try:
-#       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
-#       os.close(fd)
-#       if 0 != call([ 'wget', '-O', tmp ] + options + extras + [ url ]):
-#          raise Exception("wget/download failed: " + url)
-#       os.chmod(tmp,0644&~umask)
-#       os.rename(tmp,fname)
-#       log("done:", fname)
-#    except:
-#       if tmp and os.path.exists(tmp):
-#          os.unlink(tmp)
-#       raise
-
-def wget_internal(url,fname,options=[]):
+def wget_external(url,fname,options=[]):
    tmp = None
    extras = [ '-q' ] if not sys.stdout.isatty() else []
    log("wget:", url)
    try:
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
       os.close(fd)
-      urllib.urlretrieve(url,tmp)
+      if 0 != call([ 'wget', '-O', tmp ] + options + extras + [ url ]):
+         raise Exception("wget/download failed: " + url)
       os.chmod(tmp,0644&~umask)
       os.rename(tmp,fname)
       log("done:", fname)
@@ -175,6 +160,27 @@ def wget_internal(url,fname,options=[]):
       if tmp and os.path.exists(tmp):
          os.unlink(tmp)
       raise
+
+# It may be better to use an internal downloader (such as urllib.urlretrieve).
+# However, the external wget (above) handles things like proxies and .netrc
+# passwords neatly, without the need to add any special handling to podrecast
+# itself.  So, we'll stick with the external wget, for the moment.
+#
+# def wget_internal(url,fname,options=[]):
+#    tmp = None
+#    extras = [ '-q' ] if not sys.stdout.isatty() else []
+#    log("wget:", url)
+#    try:
+#       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
+#       os.close(fd)
+#       urlretrieve(url,tmp)
+#       os.chmod(tmp,0644&~umask)
+#       os.rename(tmp,fname)
+#       log("done:", fname)
+#    except:
+#       if tmp and os.path.exists(tmp):
+#          os.unlink(tmp)
+#       raise
 
 # ###########################################################################
 # MIME types, encodings...
@@ -207,14 +213,14 @@ except:
    elog("import error: sudo apt-get install python-lxml")
    sys.exit(1)
 
-try:
-   import magic
-except:
-   elog("import error: package/module python-magic not found")
-   elog("import error: please install it")
-   elog("import error: on debian, it's...")
-   elog("import error: sudo apt-get install python-magic")
-   sys.exit(1)
+# try:
+#    import magic
+# except:
+#    elog("import error: package/module python-magic not found")
+#    elog("import error: please install it")
+#    elog("import error: on debian, it's...")
+#    elog("import error: sudo apt-get install python-magic")
+#    sys.exit(1)
 
 # ###########################################################################
 # Configuration...

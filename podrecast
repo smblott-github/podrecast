@@ -207,6 +207,15 @@ except:
    elog("import error: sudo apt-get install python-lxml")
    sys.exit(1)
 
+try:
+   import magic
+except:
+   elog("import error: package/module python-magic not found")
+   elog("import error: please install it")
+   elog("import error: on debian, it's...")
+   elog("import error: sudo apt-get install python-magic")
+   sys.exit(1)
+
 # ###########################################################################
 # Configuration...
 

@@ -158,7 +158,7 @@ def wget_external(url,fname,options=[]):
          raise Exception("wget/download failed: " + url)
       os.chmod(tmp,0644&~umask)
       os.rename(tmp,fname)
-      log("done:", fname)
+      log("done:", url)
    except:
       if tmp and os.path.exists(tmp):
          os.unlink(tmp)

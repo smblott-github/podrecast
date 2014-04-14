@@ -121,6 +121,9 @@ def slurp(fname):
    with open(fname) as fd:
       return fd.read()
 
+def head_request():
+   return 'REQUEST_METHOD' in os.environ and os.environ['REQUEST_METHOD'] == 'HEAD'
+
 def fd_copy(src,dst):
    sz = 4 * 4096
    while True:
@@ -441,6 +444,8 @@ def handle_cgi_directory(path):
    content = etree.tostring(feed, pretty_print=True, xml_declaration=True, encoding=encoding)
    print 'Content-Type:', mime
    print
+   if head_request():
+      return
    print content
 
 # ###########################################################################
@@ -452,6 +457,8 @@ def handle_cgi_file(path):
    print 'Content-Type:', mime
    print 'Content-Length:', stat.st_size
    print
+   if head_request():
+      return
    sys.stdout.flush()
    fd = os.open(path, os.O_RDONLY)
    fd_copy(fd,sys.stdout.fileno())
@@ -488,6 +495,8 @@ def feed_index(root,prefix):
    #
    print 'Content-Type: text/html'
    print
+   if head_request():
+      return
    print '<html>'
    print '<head>'
    print a_little_css_for_mobile_devices

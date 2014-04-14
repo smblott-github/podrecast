@@ -545,19 +545,31 @@ def strip_suffix(text, suffix):
 # This should install as many as it can, then report however
 # many errors it encountered.
 def make_ready(files):
+   global errors
    for f in files:
-      if not os.path.isfile(f):
-         raise Exception("error: file does no exist: " + f)
-      if not f.endswith(DOWNLOAD_SUFFIX):
-         raise Exception("error: not a podrecast download file: " + f)
+      try:
+         if not os.path.isfile(f):
+            raise Exception("file does no exist: " + f)
+         if not f.endswith(DOWNLOAD_SUFFIX):
+            raise Exception("not a podrecast download file: " + f)
+         #
+         dst = strip_suffix(f,DOWNLOAD_SUFFIX) 
+         #
+         if os.path.exists(dst):
+            raise Exception("target exist: " + dst)
+         #
+         os.rename(f,dst)
+         log("install:", dst)
       #
-      dst = strip_suffix(f,DOWNLOAD_SUFFIX) 
-      #
-      if os.path.exists(dst):
-         raise Exception("error: target exist: " + dst)
-      #
-      os.rename(f,dst)
-      log("install:", dst)
+      except (KeyboardInterrupt, SystemExit):
+         raise
+      except Exception as error:
+         elog("install error:", str(error))
+         errors += 1
+   #
+   if 0 < errors:
+      elog("errors:", str(errors))
+      sys.exit(1)
 
 # ###########################################################################
 # Main...

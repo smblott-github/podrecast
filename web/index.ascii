@@ -138,9 +138,9 @@ Economics/Freakonomics   http://feeds.feedburner.com/freakonomicsradio?format=xm
 The root is the directory under which feeds and podcasts will be stored.
 This must come first.
 
-The following feed lines each consist of exactly two tokens:
+The subsequent feed lines each consist of exactly two tokens:
 
-- the feed's subdirectory
+- the feed's subdirectory, and
 - the feed's URL
 
 A link:podrecast.conf.sample[commented

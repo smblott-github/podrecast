@@ -4,9 +4,9 @@ include $(HOME)/.gnumake.mk
 .PHONY: build install
 
 target += index.html
-target += ../script/podrecast_mp3gain
-target += ../script/podrecast_simple
-target += ../sample/podrecast.conf.sample
+target += podrecast_mp3gain
+target += podrecast_simple
+target += podrecast.conf.sample
 
 build: $(target)
 	@true
@@ -17,6 +17,15 @@ www = public_html/podrecast/
 install:
 	$(MAKE) build
 	rsync -av --delete $(target) ../dist/*.tar.gz $(srv):$(www)
+
+podrecast_mp3gain: ../script/podrecast_mp3gain
+	install -v -m 0444 $< $@
+
+podrecast_simple: ../script/podrecast_simple
+	install -v -m 0444 $< $@
+
+podrecast.conf.sample: ../sample/podrecast.conf.sample
+	install -v -m 0444 $< $@
 
 # Notes to self.
 #

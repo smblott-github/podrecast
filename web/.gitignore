@@ -1,1 +1,4 @@
-*.html
+index.html
+podrecast.conf.sample
+podrecast_mp3gain
+podrecast_simple

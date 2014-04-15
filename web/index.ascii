@@ -318,29 +318,29 @@ If you don't want to use `chronic`, then this should do the trick:
 ****
 
 // /////////////////////////////////////////////////////
-== Miscellaneous ==
+== Additional Information ==
 
-.Authentication:
+.Authentication
 ****
 `podrecast` uses `wget` for all downloads.  For authenticated feeds, create
 a suitable `.netrc` entry. +
 `wget` consults `.netrc` for usernames and passwords.
 ****
 
-.Locking.
+.Locking
 ****
 `podrecast` locks (with `flock`) its configuration file to prevent two instances running
 at the same time (although that probably wouldn't be too much of a problem,
 see below...)
 ****
 
-.File names.
+.File names
 ****
 `podrecast` handles all downloads via temporary files (c.f. `mkstemp`).  Therefore, you
 should not encounter partial downloads with normal-looking file names.
 ****
 
-.Removing files.
+.Removing files
 ****
 `podrecast` _does not_ delete downloaded files.  Just use cron and
 `find` for that:
@@ -349,7 +349,6 @@ should not encounter partial downloads with normal-looking file names.
 ----
 find /MY/ROOT/DIRECTORY -type f -name '[^.]*' -mtime +20 -delete
 ----
-
 
 `podrecast` stores its state in hidden files in the podcast directory
 itself.  Whenever it downloads a feed, it touches all of the state files
@@ -367,7 +366,7 @@ However, there are usually not so many state files, and they take up next
 to no space; so I just let them be.
 ****
 
-.CGI.
+.CGI
 ****
 `podrecast` decides that it is running as a CGI script if _all_ of the following
 four environment variables are set: `REQUEST_METHOD`, `HTTP_HOST`,
@@ -379,7 +378,7 @@ defined.  However, when running as a CGI script, `podrecast` requires that
 the configuration file defines _exactly one_ such root.
 ****
 
-.Cron.
+.Cron
 ****
 `podrecast` is quite chatty on standard output.
 This can be helpful when run interactively,
@@ -393,7 +392,7 @@ to see _all_ of the output.
 is not attached to a terminal.
 ****
 
-.Security.
+.Security
 ****
 Hmm.  +
 I run `podrecast` on a private network, and -- although I know of no

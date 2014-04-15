@@ -18,5 +18,12 @@ dist:
 clean:
 	rm -fr build dist 
 
-.PHONY: install build dist clean
+publish:
+	python setup.py sdist upload
+
+upload:
+	$(MAKE) publish
+
+
+.PHONY: install build dist clean publish upload
  

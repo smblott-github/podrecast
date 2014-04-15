@@ -27,7 +27,10 @@ podrecast_simple: ../script/podrecast_simple
 podrecast.conf.sample: ../sample/podrecast.conf.sample
 	install -v -m 0444 $< $@
 
-.PHONY: build install dist
+dist upload publish: build
+	cd .. && $(MAKE) $@
+
+.PHONY: build install dist publish upload
 
 # Notes to self.
 #
@@ -37,6 +40,7 @@ podrecast.conf.sample: ../sample/podrecast.conf.sample
 #     make install
 #   - git commit
 #   - git tag
+#   - make publish
 #   - in setup.py and podrecast, bump version numbers
 #   - git commit
 #

@@ -1,5 +1,7 @@
+PodRecast
+---------
 
-PodRecast: a podcast aggregator for downloading, post-processing then
+PodRecast is a podcast aggregator for downloading, post-processing then
 re-publishing podcasts.
 
 Here's my problem:
@@ -18,12 +20,20 @@ republishing them on a local network.
 
 That's what PodRecast does.
 
-More information?
+More Information
+----------------
 
-See the project web page:
+.. _web page: http://podrecast.smblott.org/
 
-   - http://podrecast.smblott.org/
+See:
 
-Install:
+- the project `web page`_
 
-   - make cgi=/PATH/TO/CGI/DIRECTORY install
+Install
+-------
+
+   make cgi=/PATH/TO/CGI/DIRECTORY install
+
+(But, please, do read the project `web page`_ first.)
+
+

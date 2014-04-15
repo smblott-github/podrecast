@@ -15,9 +15,6 @@ www = public_html/podrecast/
 install: build
 	rsync -av --delete $(target) ../dist/*.tar.gz $(srv):$(www)
 
-dist: build
-	cd .. && $(MAKE) dist
-
 podrecast_mp3gain: ../script/podrecast_mp3gain
 	install -v -m 0444 $< $@
 

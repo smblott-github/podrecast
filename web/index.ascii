@@ -9,7 +9,11 @@ republishing podcasts.
 
 .Quick links:
 ****
-- link:#how[Installation].
+Installation::
+   See link:#how[Installation].
+Issues::
+   Please report issues on
+   https://github.com/smblott-github/intent_radio/issues[GitHub].
 ****
 
 // /////////////////////////////////////////////////////
@@ -81,9 +85,10 @@ All of this can be driven by link:#cron[cron].
 
 === Getting the Source
 
-.Either:
+.One of:
 ****
-- download the link:podrecast-1.0.3.tar.gz[latest release], or
+- download the latest release from https://pypi.python.org/pypi/podrecast[PyPi], or
+- download the latest release from link:podrecast-1.0.3.tar.gz[here], or
 - clone the git repository...
 
 [source, sh]

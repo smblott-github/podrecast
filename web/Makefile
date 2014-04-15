@@ -1,8 +1,6 @@
 
 include $(HOME)/.gnumake.mk
 
-.PHONY: build install
-
 target += index.html
 target += podrecast_mp3gain
 target += podrecast_simple
@@ -14,9 +12,11 @@ build: $(target)
 srv = smblott.org
 www = public_html/podrecast/
 
-install:
-	$(MAKE) build
+install: build
 	rsync -av --delete $(target) ../dist/*.tar.gz $(srv):$(www)
+
+dist: build
+	cd .. && $(MAKE) dist
 
 podrecast_mp3gain: ../script/podrecast_mp3gain
 	install -v -m 0444 $< $@
@@ -27,6 +27,8 @@ podrecast_simple: ../script/podrecast_simple
 podrecast.conf.sample: ../sample/podrecast.conf.sample
 	install -v -m 0444 $< $@
 
+.PHONY: build install dist
+
 # Notes to self.
 #
 # To publish a new release:
@@ -34,6 +36,7 @@ podrecast.conf.sample: ../sample/podrecast.conf.sample
 #   - update web/index.ascii to point to new release
 #     make install
 #   - git commit
+#   - git tag
 #   - in setup.py and podrecast, bump version numbers
 #   - git commit
 #

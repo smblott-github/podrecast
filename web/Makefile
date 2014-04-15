@@ -35,13 +35,15 @@ dist upload publish: build
 # Notes to self.
 #
 # To publish a new release:
+#   - in setup.py and podrecast, bump version numbers
 #   - make dist
 #   - update web/index.ascii to point to new release
-#     make install
+#   - make install
+#   - make publish
 #   - git commit
 #   - git tag
-#   - make publish
-#   - in setup.py and podrecast, bump version numbers
-#   - git commit
+#     gtag vX.Y.Z
+#
+# Bump version number before release.
 #
 

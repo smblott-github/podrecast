@@ -12,6 +12,8 @@ class Installer(Install):
 
    def run(self):
       Install.run(self)
+      if 'CGI_BIN' in os.environ:
+         self.cgi = [ os.environ['CGI_BIN'] ] + self.cgi
       for directory in self.cgi:
          if self.cgi_install(directory):
             return
@@ -37,7 +39,7 @@ setup(name='podrecast',
       author='Stephen Blott',
       author_email='smblott+prc@gmail.com',
       url='http://podrecast.smblott.org/',
-      version='1.0.3',
+      version='1.1.1',
       license='MIT',
       description='A podcast aggregator for downloading, post-processing then re-publishing podcasts.',
       long_description=open('README.txt').read(),

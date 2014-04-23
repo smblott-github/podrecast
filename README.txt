@@ -32,8 +32,11 @@ See:
 Install
 -------
 
-   make cgi=/PATH/TO/CGI/DIRECTORY install
+Probably one of these:
 
-(But, please, do read the project `web page`_ first.)
+   sudo python ./setup.py install
 
+   python ./setup.py install --prefix=$HOME/local
+
+But, there's more to it than this.  Please do read the project `web page`_ first.
 

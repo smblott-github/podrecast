@@ -329,7 +329,7 @@ If you don't want to use `chronic`, then this should do the trick:
 // /////////////////////////////////////////////////////
 == Release Notes ==
 
-.Development
+.Development (not yet in release)
 ****
 - Use $PODRECAST_CONF for configuration file.
 ****

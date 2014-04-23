@@ -82,8 +82,11 @@ def download_file(fname):
 def feed_file():
    return ".podrecast_feed.xml"
 
-def http_response_headers():
+def range_headers(size=None):
    print "Accept-Ranges: none"
+   if size:
+      # This is far from HTTP compliant.
+      print "Content-Range: bytes */{}".format(size)
 
 # Configuration files.
 # The first available configuration file is chosen.
@@ -101,13 +104,23 @@ configs = [ "./podrecast.conf",
 # ###########################################################################
 # Utilities...
 
+log_count = 0
 def log(*args):
-   if cgi: print "X-PODRECAST-LOG:", " ".join(args)
-   else:   print " ".join(args)
+   msg = " ".join(args)
+   if cgi:
+      global log_count
+      log_count += 1
+      print "X-PODRECAST-LOG-{0}:".format(log_count), msg
+   else:
+      print msg
 
 def elog(*args):
-   if cgi: print "X-PODRECAST-ERROR:", " ".join(args)
-   else:   sys.stderr.write(" ".join(args) + "\n")
+   if cgi:
+      global log_count
+      log_count += 1
+      print "X-PODRECAST-ERROR-{0}:".format(log_count), msg
+   else:
+      sys.stderr.write("{0}\n".format(msg))
 
 def cgi_error(*args):
    for arg in args:
@@ -452,12 +465,11 @@ def handle_cgi_directory(path):
    mime = 'text/xml'
    encoding = mime_encoding(feed_file(), "utf-8");
    content = etree.tostring(feed, pretty_print=True, xml_declaration=True, encoding=encoding)
-   http_response_headers()
    print 'Content-Type:', mime
+   range_headers()
    print
-   if head_request():
-      return
-   print content
+   if not head_request():
+      print content
 
 # ###########################################################################
 # Handle cgi requests for files...
@@ -465,15 +477,14 @@ def handle_cgi_directory(path):
 def handle_cgi_file(path):
    mime = mime_type(path, 'audio/mpeg')
    stat = os.stat(path)
-   http_response_headers()
    print 'Content-Type:', mime
    print 'Content-Length:', stat.st_size
+   range_headers(stat.st_size)
    print
-   if head_request():
-      return
-   sys.stdout.flush()
-   fd = os.open(path, os.O_RDONLY)
-   fd_copy(fd,sys.stdout.fileno())
+   if not head_request():
+      sys.stdout.flush()
+      fd = os.open(path, os.O_RDONLY)
+      fd_copy(fd,sys.stdout.fileno())
 
 # ###########################################################################
 # Show files ready for post processing...
@@ -505,21 +516,20 @@ def feed_index(root,prefix):
       </style>
       '''
    #
-   http_response_headers()
    print 'Content-Type: text/html'
+   range_headers()
    print
-   if head_request():
-      return
-   print '<html>'
-   print '<head>'
-   print a_little_css_for_mobile_devices
-   print '<title>{0}</title>'.format(title)
-   print '</head>'
-   print "<h1>{0}</h1>".format(title)
-   print '<dl>'
-   print formatted_feeds
-   print '</dl>'
-   print '</html>'
+   if not head_request():
+      print '<html>'
+      print '<head>'
+      print a_little_css_for_mobile_devices
+      print '<title>{0}</title>'.format(title)
+      print '</head>'
+      print "<h1>{0}</h1>".format(title)
+      print '<dl>'
+      print formatted_feeds
+      print '</dl>'
+      print '</html>'
 
 def html_feed_items(prefix):
    for feed, url in list_feeds():

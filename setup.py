@@ -12,6 +12,8 @@ class Installer(Install):
 
    def run(self):
       Install.run(self)
+      if 'CGI_BIN' in os.environ:
+         self.cgi = [ os.environ['CGI_BIN'] ] + self.cgi
       for directory in self.cgi:
          if self.cgi_install(directory):
             return

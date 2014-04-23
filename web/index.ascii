@@ -118,15 +118,19 @@ python ./setup.py install --prefix=$HOME/local
 The installation script tries to install podrecast as a CGI script in one
 of:
 
-- `/usr/lib/cgi-bin` +
+- `$CGI_BIN` +
+  `/usr/lib/cgi-bin` +
   `~/public_html/cgi-bin`
 
 However, the location of the CGI bin directory and its configuration are
-system dependent, in which case the installation of the CGI script is
-skipped.
+system dependent, in which case the installation may fail to find
+a suitable CGI bin, or may install it in the wrong place.  Observe the last
+few lines of output from the installation script.
 
-It may be possible to hard link the podrecast executable into the CGI bin,
-or link to it with a symbolic link.
+If the installation script fails to install the CGI script in the correct
+location, then
+it may be possible to hard link the podrecast executable into the CGI bin,
+or link to it with a symbolic link.  You will have to do this manually.
 
 Or, install it directly; something like one of the following...
 

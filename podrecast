@@ -84,9 +84,9 @@ def feed_file():
 
 def range_headers(size=None):
    print "Accept-Ranges: none"
-   if size:
-      # This is far from HTTP compliant.
-      print "Content-Range: bytes */{}".format(size)
+   # if size:
+   #    # This is far from HTTP compliant.
+   #    print "Content-Range: bytes */{}".format(size)
 
 # Configuration files.
 # The first available configuration file is chosen.

@@ -290,6 +290,15 @@ If you don't want to use `chronic`, then this should do the trick:
 // /////////////////////////////////////////////////////
 == Options ==
 
+.Environment:
+****
+- If the environment variable `PODRECAST_CONF` is defined, then
+  `$PODRECAST_CONF` is taken to be the configuration file. +
+  This can be useful if the configuration file cannot be placed in one of
+  the standard locations, and can be set either via the Apache `SenEnv` directive or a wrapper
+  shell script when `podrecast` is serving as a CGI script.
+****
+
 .Downloading options:
 ****
 `-m MAX` | `--max=MAX`::
@@ -315,6 +324,14 @@ If you don't want to use `chronic`, then this should do the trick:
 `-r` | `--ready` `[FILES...]`::
    Register these previously-downloaded files as now post processed, and
    ready for delivery as podcasts.
+****
+
+// /////////////////////////////////////////////////////
+== Release Notes ==
+
+.Development
+****
+- Use $PODRECAST_CONF for configuration file.
 ****
 
 // /////////////////////////////////////////////////////

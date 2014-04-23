@@ -1,5 +1,65 @@
 
-Just:
+Install the Executables and Sample the Configuration File
+---------------------------------------------------------
 
-   - make cgi=/PATH/TO/CGI/DIRECTORY install
+One of the following:
+
+   Install globally:
+      sudo python ./setup.py install
+
+   Install locally:
+      python ./setup.py install --prefix=$HOME/local
+
+
+Install podrecast as a CGI Script
+---------------------------------
+
+The location of the CGI bin directory and its configuration are system
+dependent.  It may be possible to hard link the podrecast executable into
+the CGI bin, or link to it with a symbolic link.
+
+Or, install it manually; something like one of these:
+
+   Install globally:
+      sudo install -v -m 0555 ./podrecast /usr/lib/cgi-bin/
+
+   Install locally:
+      install -v -m 0555 ./podrecast ~/public_html/cgi-bin
+
+Customize and Install the Configuration File
+--------------------------------------------
+
+The setup script installs a sample configuration file in
+PREFIX/podrecast.conf.sample.  Copy this to a suitable location and
+customize it to meet your own needs.
+
+First Run
+---------
+
+One of:
+
+   - podrecast
+     (Download all available podcasts.)
+
+   - podrecast -c
+     (Download all available feeds, marking available podcasts as read.)
+
+   - podrecast -a
+     (Download all available feeds, marking available podcasts in
+      newly-added feeds as read.)
+
+   - podrecast -m 2
+     (Download up to the two most recently available podcasts in each feed,
+      marking all others as read.)
+
+Finally
+-------
+
+There are more-detailed instructions on the project home page:
+
+   - http://intent-radio.smblott.org/
+
+Please raise any issues you might encounter on GitHub:
+
+   - https://github.com/smblott-github/podrecast/issues
 

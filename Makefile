@@ -5,10 +5,12 @@ build:
 install_global:
 	$(MAKE) build
 	sudo python setup.py install
+	! [ -f Makefile.global ] || $(MAKE) -f Makefile.global install
 
 install_local:
 	$(MAKE) build
 	python setup.py install --prefix=$(HOME)/local
+	! [ -f Makefile.local ] || $(MAKE) -f Makefile.local install
 
 dist:
 	python setup.py sdist

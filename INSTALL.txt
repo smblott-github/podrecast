@@ -14,17 +14,27 @@ One of the following:
 Install podrecast as a CGI Script
 ---------------------------------
 
-The location of the CGI bin directory and its configuration are system
-dependent.  It may be possible to hard link the podrecast executable into
-the CGI bin, or link to it with a symbolic link.
+The installation script tries to install podrecast as a CGI script in one
+of:
+
+   - /usr/lib/cgi-bin
+
+   - ~/public_html/cgi-bin
+
+However, the location of the CGI bin directory and its configuration are
+system dependent, in which case the installation of the CGI script is
+skipped.
+
+It may be possible to hard link the podrecast executable into the CGI bin,
+or link to it with a symbolic link.
 
 Or, install it manually; something like one of these:
 
    Install globally:
-      sudo install -v -m 0555 ./podrecast /usr/lib/cgi-bin/
+      sudo install -v -m 0555 podrecast /YOUR/CGI/BIN
 
    Install locally:
-      install -v -m 0555 ./podrecast ~/public_html/cgi-bin
+      install -v -m 0555 podrecast /YOUR/CGI/BIN
 
 Customize and Install the Configuration File
 --------------------------------------------

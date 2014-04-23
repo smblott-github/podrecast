@@ -1,3 +1,4 @@
 #!/bin/sh
+# podrecast_simple
 
 podrecast --ready `podrecast --downloaded`

@@ -3,7 +3,9 @@ include $(HOME)/.gnumake.mk
 
 target += index.html
 target += podrecast_mp3gain
+target += podrecast_mp3gain.html
 target += podrecast_simple
+target += podrecast_simple.html
 target += podrecast.conf.sample
 
 build: $(target)
@@ -26,6 +28,9 @@ podrecast.conf.sample: ../sample/podrecast.conf.sample
 
 dist upload publish: build
 	cd .. && $(MAKE) $@
+
+%.html: %
+	source-highlight -s sh < $< > $@
 
 .PHONY: build install dist publish upload
 

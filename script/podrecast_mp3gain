@@ -1,15 +1,8 @@
 #!/bin/sh
-
-# Warning:
-# This script assumes that file names do not contain whitespace characters.
-#
+# podrecast_mp3gain
 
 # ###########################################################################
-# Customisation...
-#
 # If ~/.podrecast_mp3gain exists and is executable, then it is sourced.
-# This provides an opportunity for customisation, such as renaming,
-# deleting or moving files.
 #
 
 rc="$HOME/.podrecast_mp3gain"

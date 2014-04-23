@@ -38,6 +38,9 @@ For me, two reasons:
 
 _PodRecast_ enables such post processing by downloading podcasts to a local
 system, post processing them, then republishing them.
+
+_PodRecast_ might also be used to change the bit rate, possibly to reduce
+storage and/or transmission costs.
 ****
 
 // /////////////////////////////////////////////////////
@@ -59,8 +62,7 @@ embedded in the feed.
   _PodRecast_ does this.
 
 - Post-process podcasts. +
-  _PodRecast_ does not do this, although there is a suitable MP3Gain
-  post-processing script in the repository.  See also link:#post[here].
+  _PodRecast_ does not do this, although there are a couple of suitable post-processing scripts included in the distribution.  See also link:#post[here].
 
 - _PodRecast_, serving now as a CGI script, then publishes *exactly* the original feed's
   rss/XML, but with each enclosure's URL replaced with a local URL referencing
@@ -78,7 +80,7 @@ All of this can be driven by link:#cron[cron].
 
 .Dependencies:
 ****
-- Python: 2.6 or 2.7; not 3.x.
+- Python: 2.6 or 2.7; _not 3.x_.
 - `lxml`: this is `python-lxml` on Debian.
 - `wget`
 ****
@@ -89,46 +91,72 @@ All of this can be driven by link:#cron[cron].
 ****
 - download the latest release from https://pypi.python.org/pypi/podrecast[PyPi], or
 - download the latest release from link:podrecast-1.0.3.tar.gz[here], or
-- clone the git repository...
-
-[source, sh]
-----
-git clone https://github.com/smblott-github/podrecast.git
-----
+- clone the git repository:
+** `git clone https://github.com/smblott-github/podrecast.git`
 ****
 
 [[install]]
-=== Install
+=== Install -- Executables
 
 ****
 [source, sh]
-.Install:
+.Globally:
 ----
-sudo make cgi=/PATH/TO/YOUR/CGI/DIRECTORY install
-
-# For me, that's:
-sudo make cgi=/usr/lib/cgi-bin install
+sudo python ./setup.py install
 ----
 
-[IMPORTANT]
-====
-The setup script tries to install the `podrecast` CGI script.  However, it
-will not create the CGI directory, and may therefore fail.
+[source, sh]
+.Locally:
+----
+python ./setup.py install --prefix=$HOME/local
+----
+****
 
-Observe the last few lines of the output of the setup script, above.  It
-will inform you whether and where the CGI script was installed.
-====
+=== Install -- CGI
+
+****
+The installation script tries to install podrecast as a CGI script in one
+of:
+
+- `/usr/lib/cgi-bin` +
+  `~/public_html/cgi-bin`
+
+However, the location of the CGI bin directory and its configuration are
+system dependent, in which case the installation of the CGI script is
+skipped.
+
+It may be possible to hard link the podrecast executable into the CGI bin,
+or link to it with a symbolic link.
+
+Or, install it directly; something like one of the following...
+
+[source, sh]
+.Globally:
+----
+sudo install -v -m 0555 ./podrecast /YOUR/CGI/BIN
+----
+[source, sh]
+.Locally:
+----
+install -v -m 0555 ./podrecast /YOUR/CGI/BIN
+----
 ****
 
 === Configuration
 
 ****
-Create a configuration file, one of:
+_PodRecast_ searches for its configuration file in the following locations
+(and in this order):
 
-- `/usr/local/etc/podrecast.conf` +
+- `$PODRECAST_CONF` +
+  `./podrecast.conf` +
+  `~/.podrecast.conf` +
+  `/usr/local/etc/podrecast.conf` +
   `/etc/podrecast.conf`
+****
 
-Here is an example...
+****
+Here is an example configuration file...
 
 [source, changelog]
 ----
@@ -151,12 +179,9 @@ The subsequent feed lines each consist of exactly two tokens:
 A link:podrecast.conf.sample[commented
 version] of this sample is installed by the setup script in:
 
-- `/usr/local/etc/podrecast.conf.sample`
+- `PREFIX/etc/podrecast.conf.sample`
 
 Feeds _must not_ share subdirectories.
-
-This configuration file needs to be in a system-wide location so that
-`podrecast` can find it when running as a CGI script.
 ****
 
 === Download Podcasts
@@ -183,7 +208,7 @@ When podcasts are downloaded, they are not immediately available for
 delivery.  First, they must be post processed.
 
 Here is an example. +
-A link:podrecast_mp3gain[longer version] of this script is installed by the setup script.
+A link:podrecast_mp3gain.html[longer version] of this script is installed by the setup script.
 
 [source, sh]
 .podrecast_mp3gain:
@@ -290,14 +315,14 @@ If you don't want to use `chronic`, then this should do the trick:
 // /////////////////////////////////////////////////////
 == Options ==
 
-.Environment:
-****
-- If the environment variable `PODRECAST_CONF` is defined, then
-  `$PODRECAST_CONF` is taken to be the configuration file. +
-  This can be useful if the configuration file cannot be placed in one of
-  the standard locations, and can be set either via the Apache `SenEnv` directive or a wrapper
-  shell script when `podrecast` is serving as a CGI script.
-****
+// .Environment:
+// ****
+// - If the environment variable `PODRECAST_CONF` is defined, then
+//   `$PODRECAST_CONF` is taken to be the configuration file. +
+//   This can be useful if the configuration file cannot be placed in one of
+//   the standard locations, and can be set either via the Apache `SenEnv` directive or a wrapper
+//   shell script when `podrecast` is serving as a CGI script.
+// ****
 
 .Downloading options:
 ****
@@ -332,6 +357,7 @@ If you don't want to use `chronic`, then this should do the trick:
 .Development (not yet in release)
 ****
 - Use $PODRECAST_CONF for configuration file.
+- Simplify installation.
 ****
 
 // /////////////////////////////////////////////////////

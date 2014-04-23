@@ -82,6 +82,9 @@ def download_file(fname):
 def feed_file():
    return ".podrecast_feed.xml"
 
+def http_response_headers():
+   print "Accept-Ranges: none"
+
 # Configuration files.
 # The first available configuration file is chosen.
 #
@@ -449,6 +452,7 @@ def handle_cgi_directory(path):
    mime = 'text/xml'
    encoding = mime_encoding(feed_file(), "utf-8");
    content = etree.tostring(feed, pretty_print=True, xml_declaration=True, encoding=encoding)
+   http_response_headers()
    print 'Content-Type:', mime
    print
    if head_request():
@@ -461,6 +465,7 @@ def handle_cgi_directory(path):
 def handle_cgi_file(path):
    mime = mime_type(path, 'audio/mpeg')
    stat = os.stat(path)
+   http_response_headers()
    print 'Content-Type:', mime
    print 'Content-Length:', stat.st_size
    print
@@ -500,6 +505,7 @@ def feed_index(root,prefix):
       </style>
       '''
    #
+   http_response_headers()
    print 'Content-Type: text/html'
    print
    if head_request():

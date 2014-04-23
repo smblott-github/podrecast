@@ -21,3 +21,18 @@ upload:
 
 .PHONY: build install dist clean publish upload
  
+# Notes to self.
+#
+# To publish a new release:
+#   - in setup.py and podrecast, bump version numbers
+#   - make dist
+#   - update web/index.ascii to point to new release
+#   - make install
+#   - make publish
+#   - git commit
+#   - git tag
+#     gtag vX.Y.Z
+#
+# Bump version number before release.
+#
+

@@ -2,9 +2,13 @@
 build:
 	python setup.py build
 
-install:
+install_global:
 	$(MAKE) build
 	sudo python setup.py install
+
+install_local:
+	$(MAKE) build
+	python setup.py install --prefix=$(HOME)/local
 
 dist:
 	python setup.py sdist

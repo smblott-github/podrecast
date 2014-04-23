@@ -15,14 +15,18 @@ class Installer(Install):
       for directory in self.cgi:
          if self.cgi_install(directory):
             return
-      print 'CGI bin not found.'
-      print 'CGI script (./podrecast) not installed; please install it by manually.'
+      print
+      print 'Warning:'
+      print '  CGI bin not found.'
+      print '  CGI script (./podrecast) not installed; please install it by manually.'
 
    def cgi_install(self,directory):
       directory = os.path.expanduser(directory)
       if os.path.isdir(directory) and os.access(directory, os.W_OK):
          if 0 == subprocess.call('install -m 0555 podrecast'.split() + [ directory ]):
-            print 'cgi script installed in', directory
+            print
+            print 'Note:'
+            print '  CGI script installed in', directory
             return True
       return False
 

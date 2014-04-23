@@ -235,7 +235,7 @@ as:
 
 podrecast --ready `podrecast --downloaded`
 ----
-link:podrecast_simple[This script] is also installed by the setup script.
+link:podrecast_simple.html[This script] is also installed by the setup script.
 ****
 
 === Republishing
@@ -437,12 +437,7 @@ is not attached to a terminal.
 
 .Security
 ****
-Hmm.  +
-I run `podrecast` on a private network, and -- although I know of no
-vulnerabilities -- I wouldn't
-particularly recommend running it on a public server.
-
-However, `podrecast` does do the following checks on incoming CGI requests:
+However, `podrecast` makes the following (moderate) checks on incoming CGI requests:
 
 - The final path for a directory or file _must be inside the root
   directory_. +

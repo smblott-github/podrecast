@@ -8,13 +8,12 @@ from distutils.command.install import install as Install
 # Custom installer...
 
 class Installer(Install):
+   env = [ 'PODRECAST_CGI_BIN', 'CGI_BIN' ]
    cgi = [ '/usr/lib/cgi-bin', '~/public_html/cgi-bin' ]
 
    def run(self):
       Install.run(self)
-      if 'CGI_BIN' in os.environ:
-         self.cgi = [ os.environ['CGI_BIN'] ] + self.cgi
-      for directory in self.cgi:
+      for directory in [ os.environ[env] for env in self.env if env in os.environ ] + self.cgi:
          if self.cgi_install(directory):
             return
       print

@@ -118,7 +118,8 @@ python ./setup.py install --prefix=$HOME/local
 The installation script tries to install podrecast as a CGI script in one
 of:
 
-- `$CGI_BIN` +
+- `$PODRECAST_CGI_BIN` +
+  `$CGI_BIN` +
   `/usr/lib/cgi-bin` +
   `~/public_html/cgi-bin`
 

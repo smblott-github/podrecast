@@ -120,6 +120,7 @@ def elog(*args):
       global log_count
       log_count += 1
       print "X-PODRECAST-ERROR-{0}:".format(log_count), msg
+      sys.stderr.write("{0}\n".format(msg))
    else:
       sys.stderr.write("{0}\n".format(msg))
 
@@ -486,10 +487,10 @@ def handle_cgi_directory(path):
       print content
 
 # The RSS specification indicates that the URL for the podcast goes in the
-# enclosure tag within the item.  Unfortunately, Apple and others have added
-# additional tags which also provide the URL for the podcast.  And some
+# enclosure tag within the item.  Unfortunately, Yahoo, Apple and others have
+# added additional tags which also contain the URL for the podcast.  And some
 # podcatchers use these (in preference to the URL in the enclosure).  So we'll
-# delete known tags which may be pointing to the original podcast.
+# delete known tags which may or seem to be pointing to the original podcast.
 def cleanup_item(item):
    #
    bad_tags = [
@@ -497,9 +498,15 @@ def cleanup_item(item):
          '{http://rssnamespace.org/feedburner/ext/1.0}origEnclosureLink',
          ]
    #
-   for element in item.iterchildren():
-      if element.tag in bad_tags:
-         item.remove(element)
+   for element in [ ele for ele in item.iterchildren() if ele.tag in bad_tags ]:
+      item.remove(element)
+   #
+   # If an item contains a link, then it should be a link to a page associated
+   # with the podcast, not to the podcast itself.  If the contents of a link
+   # tag end with '.mp3', then we guess that it's a link to the podcast itself
+   # and remove it.
+   for element in [ ele for ele in item.iterchildren() if ele.tag == 'link' and str(ele).endswith('.mp3') ]:
+      item.remove(element)
 
 # ###########################################################################
 # Handle cgi requests for files...

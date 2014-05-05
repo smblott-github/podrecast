@@ -28,3 +28,25 @@ BBC/More-Or-Less         http://downloads.bbc.co.uk/podcasts/radio4/moreorless/r
 BBC/Life-Scientific      http://downloads.bbc.co.uk/podcasts/radio4/tls/rss.xml
 Economics/Freakonomics   http://feeds.feedburner.com/freakonomicsradio?format=xml
 
+#
+# Optional...
+#
+# Format:
+#    webroot URL_PREFIX
+#
+# Example:
+#    webroot http://podcast.myserver.org/podcasts
+#
+# If webroot is not given, then the podrecast script itself delivers podcast
+# content.
+#
+# However, you may prefer to provide access to podcast content directly through
+# Apache.  The advantage of doing so would be that Apache can handle HTTP Range
+# requests and partial downloads (whereas the podrecast CGI script cannot).
+#
+# If webroot is given, then podrecast constructs URLs for podcasts as:
+#  WEBROOT/DIRECTORY/FILE
+#
+# where WEBROOT is the web root, as given by the webroot directive, DIRECTORY
+# is the podcast directory for the feed, and FILE is the name of the file.
+#

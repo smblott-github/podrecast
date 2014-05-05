@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-version = "1.1.2"
+version = "1.1.3"
 
 # ###########################################################################
 # Imports...
@@ -115,6 +115,7 @@ def log(*args):
       print msg
 
 def elog(*args):
+   msg = " ".join(args)
    if cgi:
       global log_count
       log_count += 1
@@ -289,12 +290,20 @@ def read_roots(quiet=False):
    roots = [ line for line in read_config(choose_config(quiet)) if line[0] == "root" ]
    return roots
 
+def read_webroot():
+   for line in read_config(choose_config(True)):
+      if line[0] == "webroot":
+         return line[1]
+   return None
+
 # ###########################################################################
 # Handle feeds and enclosures...
 
 def download_feeds(config,options):
    global errors
    for line in read_config(config,True):
+      if line[0] == "webroot":
+         continue
       if line[0] == "root":
          root = line[1]
          if not os.path.isabs(root):
@@ -442,6 +451,12 @@ def path_has_prefix(path,prefix):
 def handle_cgi_directory(path):
    chdir(path)
    #
+   webroot = read_webroot()
+   if not webroot:
+      http_host = os.environ['HTTP_HOST']
+      script_name = os.environ['SCRIPT_NAME']
+      webroot = "http://{0}{1}".format(http_host,script_name)
+   #
    if not os.path.isfile(feed_file()):
       raise Exception("feed file does not exist", path)
    if not os.access(feed_file(), os.R_OK):
@@ -452,15 +467,14 @@ def handle_cgi_directory(path):
       attributes = enclosure.attrib
       url = urlparse(attributes["url"])
       fname = os.path.basename(url.path)
+      item = enclosure.getparent()
       if not os.path.isfile(fname) or not os.access(fname, os.R_OK):
-         item = enclosure.getparent()
          item.getparent().remove(item)
          continue
+      cleanup_item(item)
       #
-      http_host = os.environ['HTTP_HOST']
-      script_name = os.environ['SCRIPT_NAME']
       path_info = os.environ['PATH_INFO']
-      attributes["url"] = "http://{0}{1}{2}/{3}".format(http_host,script_name,path_info,fname)
+      attributes["url"] = "{0}{1}/{2}".format(webroot,path_info,fname)
    #
    mime = 'text/xml'
    encoding = mime_encoding(feed_file(), "utf-8");
@@ -470,6 +484,22 @@ def handle_cgi_directory(path):
    print
    if not head_request():
       print content
+
+# The RSS specification indicates that the URL for the podcast goes in the
+# enclosure tag within the item.  Unfortunately, Apple and others have added
+# additional tags which also provide the URL for the podcast.  And some
+# podcatchers use these (in preference to the URL in the enclosure).  So we'll
+# delete known tags which may be pointing to the original podcast.
+def cleanup_item(item):
+   #
+   bad_tags = [
+         '{http://search.yahoo.com/mrss/}content',
+         '{http://rssnamespace.org/feedburner/ext/1.0}origEnclosureLink',
+         ]
+   #
+   for element in item.iterchildren():
+      if element.tag in bad_tags:
+         item.remove(element)
 
 # ###########################################################################
 # Handle cgi requests for files...

@@ -4,7 +4,7 @@ build:
 
 install_global:
 	$(MAKE) build
-	sudo python setup.py install
+	sudo -E python setup.py install
 	! [ -f Makefile.global ] || $(MAKE) -f Makefile.global install
 
 install_local:

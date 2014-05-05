@@ -289,12 +289,20 @@ def read_roots(quiet=False):
    roots = [ line for line in read_config(choose_config(quiet)) if line[0] == "root" ]
    return roots
 
+def read_webroot():
+   for line in read_config(choose_config(True)):
+      if line[0] == "webroot":
+         return line[1]
+   return None
+
 # ###########################################################################
 # Handle feeds and enclosures...
 
 def download_feeds(config,options):
    global errors
    for line in read_config(config,True):
+      if line[0] == "webroot":
+         continue
       if line[0] == "root":
          root = line[1]
          if not os.path.isabs(root):
@@ -442,6 +450,12 @@ def path_has_prefix(path,prefix):
 def handle_cgi_directory(path):
    chdir(path)
    #
+   webroot = read_webroot()
+   if not webroot:
+      http_host = os.environ['HTTP_HOST']
+      script_name = os.environ['SCRIPT_NAME']
+      webroot = "http://{0}{1}".format(http_host,script_name)
+   #
    if not os.path.isfile(feed_file()):
       raise Exception("feed file does not exist", path)
    if not os.access(feed_file(), os.R_OK):
@@ -457,10 +471,8 @@ def handle_cgi_directory(path):
          item.getparent().remove(item)
          continue
       #
-      http_host = os.environ['HTTP_HOST']
-      script_name = os.environ['SCRIPT_NAME']
       path_info = os.environ['PATH_INFO']
-      attributes["url"] = "http://{0}{1}{2}/{3}".format(http_host,script_name,path_info,fname)
+      attributes["url"] = "{0}{1}/{2}".format(webroot,path_info,fname)
    #
    mime = 'text/xml'
    encoding = mime_encoding(feed_file(), "utf-8");

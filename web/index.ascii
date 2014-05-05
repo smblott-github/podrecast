@@ -90,7 +90,7 @@ All of this can be driven by link:#cron[cron].
 .One of:
 ****
 - download the latest release from https://pypi.python.org/pypi/podrecast[PyPi], or
-- download the latest release from link:podrecast-1.0.3.tar.gz[here], or
+- download the latest release from link:podrecast-1.1.3.tar.gz[here], or
 - clone the git repository:
 ** `git clone https://github.com/smblott-github/podrecast.git`
 ****
@@ -361,8 +361,7 @@ If you don't want to use `chronic`, then this should do the trick:
 
 .Development (not yet in release)
 ****
-- Use $PODRECAST_CONF for configuration file.
-- Simplify installation.
+(Noting, currently)
 ****
 
 // /////////////////////////////////////////////////////
@@ -377,7 +376,7 @@ a suitable `.netrc` entry. +
 
 .Locking
 ****
-`podrecast` locks (with `flock`) its configuration file to prevent two instances running
+When downloading podcasts, `podrecast` locks (with `flock`) its configuration file to prevent two instances running
 at the same time (although that probably wouldn't be too much of a problem,
 see below...)
 ****
@@ -398,7 +397,7 @@ should not encounter partial downloads with normal-looking file names.
 find /MY/ROOT/DIRECTORY -type f -name '[^.]*' -mtime +20 -delete
 ----
 
-`podrecast` stores its state in hidden files in the podcast directory
+`podrecast` stores its state in hidden files in the feed directory
 itself.  Whenever it downloads a feed, it touches all of the state files
 related to enclosures mentioned in the feed.  Therefore, state files with
 old modification times can safely be deleted.  Something like:
@@ -442,7 +441,7 @@ is not attached to a terminal.
 
 .Security
 ****
-However, `podrecast` makes the following (moderate) checks on incoming CGI requests:
+`podrecast` makes the following (moderate) checks on incoming CGI requests:
 
 - The final path for a directory or file _must be inside the root
   directory_. +
@@ -452,6 +451,9 @@ However, `podrecast` makes the following (moderate) checks on incoming CGI reque
 - The path _may not_ be more than one thousand characters long. +
   (That's a lot of characters.  Anything longer may be someone
   probing for vulnerabilities.)
+
+If you're running `podrecast` on a public server, then it may be best to
+configure your web server to require some form of authentication.
 ****
 
 // ++++

@@ -485,9 +485,9 @@ def handle_cgi_directory(path):
    if not head_request():
       print content
 
-# The RSS specification says the URL for the podcast goes in the enclosure tag
-# within the item.  Unfortunately, Apple and others have added additional tags
-# within the item which also provide the URL for the podcast.  And some
+# The RSS specification indicates that the URL for the podcast goes in the
+# enclosure tag within the item.  Unfortunately, Apple and others have added
+# additional tags which also provide the URL for the podcast.  And some
 # podcatchers use these (in preference to the URL in the enclosure).  So we'll
 # delete known tags which may be pointing to the original podcast.
 def cleanup_item(item):

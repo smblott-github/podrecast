@@ -115,6 +115,7 @@ def log(*args):
       print msg
 
 def elog(*args):
+   msg = " ".join(args)
    if cgi:
       global log_count
       log_count += 1
@@ -466,10 +467,11 @@ def handle_cgi_directory(path):
       attributes = enclosure.attrib
       url = urlparse(attributes["url"])
       fname = os.path.basename(url.path)
+      item = enclosure.getparent()
       if not os.path.isfile(fname) or not os.access(fname, os.R_OK):
-         item = enclosure.getparent()
          item.getparent().remove(item)
          continue
+      cleanup_item(item)
       #
       path_info = os.environ['PATH_INFO']
       attributes["url"] = "{0}{1}/{2}".format(webroot,path_info,fname)
@@ -482,6 +484,22 @@ def handle_cgi_directory(path):
    print
    if not head_request():
       print content
+
+# The RSS specification says the URL for the podcast goes in the enclosure tag
+# within the item.  Unfortunately, Apple and others have added additional tags
+# within the item which also provide the URL for the podcast.  And some
+# podcatchers use these (in preference to the URL in the enclosure).  So we'll
+# delete known tags which may be pointing to the original podcast.
+def cleanup_item(item):
+   #
+   bad_tags = [
+         '{http://search.yahoo.com/mrss/}content',
+         '{http://rssnamespace.org/feedburner/ext/1.0}origEnclosureLink',
+         ]
+   #
+   for element in item.iterchildren():
+      if element.tag in bad_tags:
+         item.remove(element)
 
 # ###########################################################################
 # Handle cgi requests for files...

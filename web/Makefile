@@ -7,6 +7,7 @@ target += podrecast_mp3gain.html
 target += podrecast_simple
 target += podrecast_simple.html
 target += podrecast.conf.sample
+target += favicon.ico
 
 build: $(target)
 	@true

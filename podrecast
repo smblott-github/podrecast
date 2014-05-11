@@ -291,11 +291,18 @@ def read_roots(quiet=False):
    roots = [ line for line in read_config(choose_config(quiet)) if line[0] == "root" ]
    return roots
 
-def read_webroot():
+def read_config_line(word):
    for line in read_config(choose_config(True)):
-      if line[0] == "webroot":
+      if line[0] == word:
          return line[1]
    return None
+
+def read_webroot():
+   return read_config_line("webroot")
+
+def read_credentials():
+   credentials = read_config_line("credentials")
+   return (credentials + "@") if credentials else ""
 
 # ###########################################################################
 # Handle feeds and enclosures...
@@ -303,7 +310,7 @@ def read_webroot():
 def download_feeds(config,options):
    global errors
    for line in read_config(config,True):
-      if line[0] == "webroot":
+      if line[0] in [ "webroot", "credentials" ]:
          continue
       if line[0] == "root":
          root = line[1]
@@ -418,7 +425,7 @@ def handle_cgi():
    root = roots[0][1]
    #
    if os.environ['PATH_INFO'] == '/' or os.environ['PATH_INFO'] == '/index.html':
-      prefix = "http://{0}{1}/".format(os.environ['HTTP_HOST'],os.environ['SCRIPT_NAME'])
+      prefix = "http://{0}{1}{2}/".format(read_credentials(),os.environ['HTTP_HOST'],os.environ['SCRIPT_NAME'])
       feed_index(root,prefix)
       return
    #
@@ -456,7 +463,7 @@ def handle_cgi_directory(path):
    if not webroot:
       http_host = os.environ['HTTP_HOST']
       script_name = os.environ['SCRIPT_NAME']
-      webroot = "http://{0}{1}".format(http_host,script_name)
+      webroot = "http://{0}{1}{2}".format(read_credentials(),http_host,script_name)
    #
    if not os.path.isfile(feed_file()):
       raise Exception("feed file does not exist", path)

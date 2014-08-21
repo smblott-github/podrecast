@@ -163,7 +163,7 @@ def chdir(directory):
 # Wget...
 
 def wget(url,fname,options=[]):
-   return wget_external(url,fname,options)
+   return curl_external(url,fname,options)
 
 def wget_external(url,fname,options=[]):
    tmp = None
@@ -174,6 +174,26 @@ def wget_external(url,fname,options=[]):
       os.close(fd)
       if 0 != call([ 'wget', '-O', tmp ] + options + extras + [ url ]):
          raise Exception("wget/download failed: " + url)
+      os.chmod(tmp,0644&~umask)
+      os.rename(tmp,fname)
+      log("done:", url)
+   except:
+      if tmp and os.path.exists(tmp):
+         os.unlink(tmp)
+      raise
+
+def curl_external(url,fname,options=[]):
+   tmp = None
+   extras = [ '-s' ] if not sys.stdout.isatty() else []
+   # Hack: translate wget options to curl options.
+   options = [ '-s' if opt == '-q' else opt for opt in options ]
+   #
+   log("curl:", url)
+   try:
+      fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
+      os.close(fd)
+      if 0 != call([ 'curl', '-n', '-o', tmp ] + options + extras + [ url ]):
+         raise Exception("curl/download failed: " + url)
       os.chmod(tmp,0644&~umask)
       os.rename(tmp,fname)
       log("done:", url)

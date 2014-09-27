@@ -153,10 +153,10 @@ def chdir(directory):
    if os.path.exists(directory) and not os.path.isdir(directory):
       raise Exception("exists, but is not a directory: " + directory)
    if not os.path.isdir(directory):
-      log("creating:", directory)
+      # log("creating:", directory)
       os.makedirs(directory)
    #
-   log("chdir:", directory)
+   # log("chdir:", directory)
    os.chdir(directory)
 
 def must_have_non_empty_file(path):
@@ -175,7 +175,7 @@ def wget(url,fname,options=[]):
 def wget_external(url,fname,options=[]):
    tmp = None
    extras = [ '-q' ] if not sys.stdout.isatty() else []
-   log("wget:", url)
+   # log("wget:", url)
    try:
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
       os.close(fd)
@@ -184,7 +184,7 @@ def wget_external(url,fname,options=[]):
       must_have_non_empty_file(tmp)
       os.chmod(tmp,0644&~umask)
       os.rename(tmp,fname)
-      log("done:", url)
+      # log("done:", url)
    except:
       if tmp and os.path.exists(tmp):
          os.unlink(tmp)
@@ -196,7 +196,7 @@ def curl_external(url,fname,options=[]):
    # Hack: translate wget options to curl options.
    options = [ '-s' if opt == '-q' else opt for opt in options ]
    #
-   log("curl:", url)
+   # log("curl:", url)
    try:
       fd, tmp = mkstemp(dir=".", prefix=fname, suffix=".podrecast.download.tmp")
       os.close(fd)
@@ -205,7 +205,7 @@ def curl_external(url,fname,options=[]):
       must_have_non_empty_file(tmp)
       os.chmod(tmp,0644&~umask)
       os.rename(tmp,fname)
-      log("done:", url)
+      # log("done:", url)
    except:
       if tmp and os.path.exists(tmp):
          os.unlink(tmp)
@@ -286,7 +286,7 @@ def choose_config(quiet=False):
    for config in configs:
       config = os.path.expanduser(config)
       if os.path.isfile(config) and os.access(config, os.R_OK):
-         if not quiet: log("config:", config)
+         # if not quiet: log("config:", config)
          return config
    raise Exception("failed to find config file: " + str(configs))
 

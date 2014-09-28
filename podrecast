@@ -2,6 +2,8 @@
 
 version = "1.1.3"
 
+use_curl_for_feed = True
+
 # ###########################################################################
 # Imports...
 
@@ -368,8 +370,10 @@ def download_feed(directory,url,options):
          options = copy(options)
          options.catchup = True
       #
-      wget_external(url,feed_file(), [ '-q' ])
-      # curl_external(url,feed_file(), [ '-q' ])
+      if use_curl_for_feed:
+         curl_external(url,feed_file(), [ '-q' ])
+      else:
+         wget_external(url,feed_file(), [ '-q' ])
       feed, enclosures = slurp_enclosures(feed_file())
    except:
       chdir(cwd)

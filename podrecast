@@ -518,7 +518,7 @@ def handle_cgi_directory(path):
       path_info = os.environ['PATH_INFO']
       attributes["url"] = "{0}{1}/{2}".format(webroot,path_info,fname)
    #
-   mime = 'text/xml'
+   mime = 'text/rss+xml'
    encoding = mime_encoding(feed_file(), "utf-8");
    content = etree.tostring(feed, pretty_print=True, xml_declaration=True, encoding=encoding)
    print 'Content-Type:', mime

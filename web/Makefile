@@ -12,8 +12,8 @@ target += favicon.ico
 build: $(target)
 	@true
 
-srv = smblott.org
-www = public_html/podrecast/
+srv = smblott.computing.dcu.ie
+www = /home/www/smblott.org/podrecast/
 
 install: build
 	rsync -av --delete $(target) ../dist/*.tar.gz $(srv):$(www)

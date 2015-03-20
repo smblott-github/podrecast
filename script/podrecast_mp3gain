@@ -1,6 +1,8 @@
 #!/bin/sh
 # podrecast_mp3gain
 
+mp3gain='mp3gain'
+
 # ###########################################################################
 # If ~/.podrecast_mp3gain exists and is executable, then it is sourced.
 #
@@ -16,9 +18,14 @@ fi
 # ###########################################################################
 # Do mp3gain...
 
-if ! which mp3gain > /dev/null
+if which aacgain > /dev/null
 then
-   echo "error: could not find mp3gain executable" >&2
+   mp3gain='aacgain'
+fi
+
+if ! which $mp3gain > /dev/null
+then
+   echo "error: could not find mp3gain or aacgain executable" >&2
    exit 1
 fi
 
@@ -29,7 +36,7 @@ do
    (
       if flock -x -n 9
       then
-         nice nice mp3gain -r -c -p -t -m $gain $file \
+         nice nice $mp3gain -r -c -p -t -m $gain $file \
             && podrecast --ready $file
       fi
    ) 9< $file

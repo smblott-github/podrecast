@@ -29,7 +29,7 @@ then
    exit 1
 fi
 
-gain=6
+gain=3
 
 for file in `podrecast --downloaded`
 do
